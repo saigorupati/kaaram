@@ -6,7 +6,7 @@
 //  sectioned ingredients list, and numbered steps with timer badges.
 //
 //  Not yet persisted: favorite toggle (Phase 4 wires SwiftData sync).
-//  Not yet functional: Start Cooking navigates to a stub until Phase 3.
+//  Start Cooking opens the full-screen step-by-step cooking mode.
 //
 
 import SwiftUI
@@ -17,6 +17,9 @@ struct RecipeDetailView: View {
     // Favorite state is ephemeral until Phase 4 introduces SwiftData
     // sync of user favorites to the CloudKit private database.
     @State private var isFavorited: Bool = false
+
+    // Full-screen cooking mode presentation.
+    @State private var isCookingModeActive: Bool = false
 
     // Haptic generators for the favorite toggle.
     private let haptic = UIImpactFeedbackGenerator(style: .soft)
@@ -57,6 +60,9 @@ struct RecipeDetailView: View {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
+        }
+        .fullScreenCover(isPresented: $isCookingModeActive) {
+            CookingModeView(recipe: recipe)
         }
     }
 
@@ -176,8 +182,8 @@ struct RecipeDetailView: View {
             }
             .accessibilityLabel(isFavorited ? "Remove from favorites" : "Add to favorites")
 
-            NavigationLink {
-                CookingModeStub(recipe: recipe)
+            Button {
+                isCookingModeActive = true
             } label: {
                 HStack(spacing: Spacing.s) {
                     Image(systemName: "play.fill")
@@ -188,10 +194,18 @@ struct RecipeDetailView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
-                    Color.kaaramSpice,
+                    recipe.steps.isEmpty
+                        ? Color.kaaramSpice.opacity(0.4)
+                        : Color.kaaramSpice,
                     in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
                 )
             }
+            .disabled(recipe.steps.isEmpty)
+            .accessibilityLabel(
+                recipe.steps.isEmpty
+                    ? "Start Cooking (no steps available)"
+                    : "Start Cooking"
+            )
         }
     }
 
@@ -371,33 +385,6 @@ private struct StepRow: View {
         let m = seconds / 60
         let s = seconds % 60
         return s == 0 ? "\(m) min" : "\(m)m \(s)s"
-    }
-}
-
-// MARK: - Cooking mode stub
-
-/// Placeholder for Phase 3. Shown so navigation is wired today.
-private struct CookingModeStub: View {
-    let recipe: Recipe
-
-    var body: some View {
-        VStack(spacing: Spacing.l) {
-            Image(systemName: "wrench.and.screwdriver")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Step-by-step cooking mode")
-                .font(.kaaramHeadline)
-            Text("Coming in Phase 3 — full-screen steps, per-step timers, screen-awake.")
-                .font(.kaaramCallout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.l)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.kaaramBackground)
-        .navigationTitle(recipe.nameEN)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
