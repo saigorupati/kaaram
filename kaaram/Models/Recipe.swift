@@ -112,6 +112,7 @@ extension Recipe {
         case northIndian  = "north-indian"
         case other
 
+        /// Full label for detail screens and places with room.
         var displayName: String {
             switch self {
             case .andhra:       "Andhra"
@@ -119,6 +120,15 @@ extension Recipe {
             case .southIndian:  "South Indian"
             case .northIndian:  "North Indian"
             case .other:        "Other"
+            }
+        }
+
+        /// Abbreviated label for narrow contexts (e.g. recipe cards in a grid).
+        var shortName: String {
+            switch self {
+            case .southIndian:  "S. Indian"
+            case .northIndian:  "N. Indian"
+            default:            displayName
             }
         }
     }

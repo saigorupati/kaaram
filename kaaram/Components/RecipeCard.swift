@@ -28,10 +28,10 @@ struct RecipeCard: View {
                 }
             }
 
-            HStack(spacing: Spacing.s) {
-                Chip(text: recipe.region.displayName, systemImage: "map", style: .curry)
+            HStack(spacing: Spacing.xs) {
+                Chip(text: recipe.region.shortName, style: .curry, size: .compact)
                 if recipe.totalMinutes > 0 {
-                    Chip(text: "\(recipe.totalMinutes) min", systemImage: "clock", style: .turmeric)
+                    Chip(text: "\(recipe.totalMinutes) min", style: .turmeric, size: .compact)
                 }
             }
         }
