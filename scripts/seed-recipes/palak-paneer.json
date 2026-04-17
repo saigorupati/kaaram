@@ -1,0 +1,26 @@
+{
+  "nameEN": { "type": "STRING", "value": "Palak Paneer" },
+  "nameTE": { "type": "STRING", "value": "పాలక్ పనీర్" },
+  "nameRomanized": { "type": "STRING", "value": "palak paneer" },
+  "slug": { "type": "STRING", "value": "palak-paneer" },
+  "summary": {
+    "type": "STRING",
+    "value": "Creamy spinach-paneer curry with a smooth, aromatic gravy, soft paneer cubes, and a finishing touch of kasuri methi. Tip: don't fry the paneer first — it can turn tough. Tomato is optional but improves the gravy."
+  },
+  "category": { "type": "STRING", "value": "curry" },
+  "region": { "type": "STRING", "value": "north-indian" },
+  "difficulty": { "type": "INT64", "value": 2 },
+  "totalMinutes": { "type": "INT64", "value": 40 },
+  "servings": { "type": "INT64", "value": 4 },
+  "ingredientsJSON": {
+    "type": "STRING",
+    "value": "[{\"section\":\"For blanching\",\"qty\":\"400-500\",\"unit\":\"g\",\"item\":\"spinach\"},{\"section\":\"For blanching\",\"qty\":\"1\",\"unit\":\"liter\",\"item\":\"water\"},{\"section\":\"For the paste\",\"qty\":\"1\",\"unit\":\"tbsp\",\"item\":\"oil\"},{\"section\":\"For the paste\",\"qty\":\"1\",\"unit\":\"inch\",\"item\":\"cinnamon stick\"},{\"section\":\"For the paste\",\"qty\":\"3\",\"unit\":null,\"item\":\"cloves\"},{\"section\":\"For the paste\",\"qty\":\"1\",\"unit\":null,\"item\":\"green cardamom pod\"},{\"section\":\"For the paste\",\"qty\":\"1\",\"unit\":\"tbsp\",\"item\":\"broken cashews\"},{\"section\":\"For the paste\",\"qty\":\"2-3\",\"unit\":null,\"item\":\"green chilies, chopped\"},{\"section\":\"For the paste\",\"qty\":\"1/2\",\"unit\":\"cup\",\"item\":\"onion, roughly sliced\"},{\"section\":\"For the paste\",\"qty\":\"1/2\",\"unit\":\"cup\",\"item\":\"tomato, roughly chopped\"},{\"section\":\"For the curry\",\"qty\":\"2\",\"unit\":\"tbsp\",\"item\":\"oil\"},{\"section\":\"For the curry\",\"qty\":\"2\",\"unit\":\"tbsp\",\"item\":\"butter, divided\"},{\"section\":\"For the curry\",\"qty\":\"1\",\"unit\":\"tsp\",\"item\":\"cumin seeds\"},{\"section\":\"For the curry\",\"qty\":\"6-8\",\"unit\":null,\"item\":\"curry leaves\"},{\"section\":\"For the curry\",\"qty\":\"1\",\"unit\":\"tsp\",\"item\":\"ginger-garlic paste\"},{\"section\":\"For the curry\",\"qty\":\"1/4\",\"unit\":\"tsp\",\"item\":\"turmeric\"},{\"section\":\"For the curry\",\"qty\":\"1\",\"unit\":\"tsp\",\"item\":\"red chili powder\"},{\"section\":\"For the curry\",\"qty\":\"1\",\"unit\":\"tsp\",\"item\":\"coriander powder\"},{\"section\":\"For the curry\",\"qty\":\"1/2\",\"unit\":\"tsp\",\"item\":\"cumin powder\"},{\"section\":\"For the curry\",\"qty\":\"1/2\",\"unit\":\"tsp\",\"item\":\"garam masala\",\"notes\":\"optional\"},{\"section\":\"For the curry\",\"qty\":\"1 to 1 1/4\",\"unit\":\"tsp\",\"item\":\"salt, or to taste\"},{\"section\":\"For the curry\",\"qty\":\"1/2\",\"unit\":\"cup\",\"item\":\"water\",\"notes\":\"more if needed\"},{\"section\":\"For the curry\",\"qty\":\"150\",\"unit\":\"g\",\"item\":\"paneer, cubed\"},{\"section\":\"For the curry\",\"qty\":\"1\",\"unit\":\"tbsp\",\"item\":\"fresh cream\",\"notes\":\"optional\"},{\"section\":\"For the curry\",\"qty\":\"2\",\"unit\":\"tsp\",\"item\":\"kasuri methi, crushed\"}]"
+  },
+  "stepsJSON": {
+    "type": "STRING",
+    "value": "[{\"text\":\"Blanch spinach: Boil 1 liter water. Add spinach and cook 2–3 minutes. Remove and cool completely.\",\"durationSec\":300},{\"text\":\"Cook paste base: Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly. Add green chilies, onion, and tomato. Cover and cook on low for 5 minutes until soft. Cool.\",\"durationSec\":420},{\"text\":\"Blend the cooked onion-tomato mixture with the spinach into a smooth paste.\"},{\"text\":\"Start curry: Heat 2 tbsp oil and 1 tbsp butter. Add cumin seeds and curry leaves. Add ginger-garlic paste and sauté until the raw smell fades.\",\"durationSec\":120},{\"text\":\"Add spices: Stir in turmeric, red chili powder, and salt.\"},{\"text\":\"Cook paste: Add the green paste, coriander powder, cumin powder, and garam masala if using. Cover and cook on low until oil starts to separate.\",\"durationSec\":300},{\"text\":\"Adjust consistency: Add 1/2 cup water and simmer 2–3 minutes.\",\"durationSec\":180},{\"text\":\"Add paneer cubes directly without frying. Cover and simmer on low for 5–10 minutes.\",\"durationSec\":420},{\"text\":\"Finish: Stir in remaining 1 tbsp butter, cream if using, and crushed kasuri methi. Turn off heat.\"}]"
+  },
+  "tags": { "type": "STRING_LIST", "value": ["vegetarian", "kidfriendly"] },
+  "isPublished": { "type": "INT64", "value": 1 },
+  "schemaVersion": { "type": "INT64", "value": 1 }
+}
