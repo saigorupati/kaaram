@@ -44,17 +44,17 @@ Monetization: Free, with a tip jar (no feature gating).
 - [ ] **Manual**: reserve "Kaaram" in App Store Connect
 - [ ] **Manual**: placeholder app icon (even a solid color works for now)
 
-## Phase 1 — Core read path
+## Phase 1 — Core read path ✅
 
-- [ ] `Recipe` domain model (`struct Recipe: Identifiable, Hashable`)
-- [ ] `RecipeRepository` protocol + `CloudKitRecipeRepository` implementation
-- [ ] Paginated fetch with `CKQueryOperation`
-- [ ] Home screen: featured + new sections wired to repo
-- [ ] Recipe detail screen: hero image, bilingual name, meta chips, ingredients, steps preview
-- [ ] Image caching (on-disk) for offline re-open
-- [ ] `CachedRecipe` SwiftData model as offline mirror
-- [ ] Loading, empty, and error states
-- [ ] Seed 5–10 real recipes in CloudKit Development
+- [x] `Recipe` domain model + `RecipeRepository` protocol
+- [x] `CloudKitRecipeRepository` with resilient per-record decoding
+- [x] Home screen with loading / loaded / empty / error states + pull-to-refresh
+- [x] Recipe detail: hero, bilingual name, meta chips, sectioned ingredients, numbered steps with timer badges, favorite + share
+- [x] URLCache (50 MB RAM / 500 MB disk) for AsyncImage persistence
+- [x] `CachedRecipe` SwiftData model + `RecipeCache` @ModelActor
+- [x] `CachingRecipeRepository` network-first with cache fallback
+- [x] Palak Paneer seeded via `./scripts/seed-recipes.sh`
+- [ ] **Deferred**: real hero images, pagination (`CKQueryOperation`), seed more recipes
 
 ## Phase 2 — Search & filters
 
