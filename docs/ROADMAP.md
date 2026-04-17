@@ -1,0 +1,160 @@
+# Kaaram — Roadmap (Initial → Production)
+
+A living document. Update as phases finish or scope shifts.
+
+---
+
+## Locked-in stack
+
+| Layer | Choice |
+|---|---|
+| UI | SwiftUI, iOS 17+ |
+| Recipe backend | CloudKit **Public** Database |
+| User data (favorites, notes) | SwiftData + CloudKit **Private** Database sync |
+| Auth | Implicit via user's Apple ID (CloudKit) |
+| Payments | StoreKit 2 (consumable tip jar) |
+| Analytics/crashes | MetricKit + TelemetryDeck (optional) |
+
+Bundle ID: `com.saigorupati.kaaram`
+CloudKit container: `iCloud.com.saigorupati.kaaram`
+
+---
+
+## MVP (v1.0) feature set
+
+1. Browse + search recipes
+2. Step-by-step cooking mode
+3. Favorites & personal notes
+
+Language: English UI, each recipe shows name in **English / తెలుగు / romanized**.
+Monetization: Free, with a tip jar (no feature gating).
+
+---
+
+## Phase 0 — Foundations ✅
+
+- [x] Rename bundle ID to `com.saigorupati.kaaram`
+- [x] Add CloudKit entitlement + container identifier
+- [x] Accent color set (chili-red) in asset catalog
+- [x] Design system: `Color+Kaaram`, `Font+Kaaram`, `Layout` (Spacing/Radius)
+- [x] Reusable components: `Chip`, `BilingualName`, `RecipeCard`, `SectionHeader`
+- [x] Placeholder home screen showcasing the design system
+- [x] CloudKit schema documented (`docs/CLOUDKIT_SCHEMA.md`)
+- [ ] **Manual**: create CloudKit container + `Recipe` record type in CloudKit Console
+- [ ] **Manual**: reserve "Kaaram" in App Store Connect
+- [ ] **Manual**: placeholder app icon (even a solid color works for now)
+
+## Phase 1 — Core read path
+
+- [ ] `Recipe` domain model (`struct Recipe: Identifiable, Hashable`)
+- [ ] `RecipeRepository` protocol + `CloudKitRecipeRepository` implementation
+- [ ] Paginated fetch with `CKQueryOperation`
+- [ ] Home screen: featured + new sections wired to repo
+- [ ] Recipe detail screen: hero image, bilingual name, meta chips, ingredients, steps preview
+- [ ] Image caching (on-disk) for offline re-open
+- [ ] `CachedRecipe` SwiftData model as offline mirror
+- [ ] Loading, empty, and error states
+- [ ] Seed 5–10 real recipes in CloudKit Development
+
+## Phase 2 — Search & filters
+
+- [ ] Search box on Browse tab; query by `nameRomanized CONTAINS[c]`
+- [ ] Category chips (breakfast, curry, pickle, sweet, festive, tiffin, rice, chutney, snack)
+- [ ] Region filter (Andhra / Telangana / South Indian)
+- [ ] Tag filter (vegetarian, glutenfree, kidfriendly…)
+- [ ] Sort: Newest, Quickest, Easiest
+- [ ] Recent-searches list (on-device only)
+
+## Phase 3 — Step-by-step cooking mode
+
+- [ ] Full-screen, swipeable step view with large type
+- [ ] Per-step inline timer with progress ring
+- [ ] Keep-awake while active (`isIdleTimerDisabled = true`)
+- [ ] Haptics on step advance / timer completion
+- [ ] "Complete" summary screen
+- [ ] Live Activity for active timer (nice-to-have; defer if tight)
+
+## Phase 4 — Favorites & notes
+
+- [ ] `FavoriteRecipe` SwiftData model → CloudKit Private DB sync
+- [ ] `RecipeNote` SwiftData model → CloudKit Private DB sync
+- [ ] Heart button on Recipe detail + cards
+- [ ] Favorites tab with local-first list, sorted by `favoritedAt`
+- [ ] Note editor on Recipe detail (markdown-lite)
+- [ ] Graceful degradation when user is signed out of iCloud
+
+## Phase 5 — Localization & a11y polish
+
+- [ ] String Catalog (`.xcstrings`) for all UI strings (English only at launch)
+- [ ] User setting to toggle visibility of Telugu script / romanized names
+- [ ] VoiceOver labels for every interactive element (chips, cards, buttons)
+- [ ] Dynamic Type verified at all sizes up to AX5
+- [ ] Dark mode parity pass
+- [ ] Reduce Motion respected (disable shine/parallax if enabled)
+- [ ] Right-to-left sanity check (even though Telugu is LTR)
+
+## Phase 6 — Tip jar (monetization)
+
+- [ ] StoreKit 2 setup with 3 consumables ($0.99 / $2.99 / $4.99)
+- [ ] "Support Kaaram" screen with animated chili peppers on tap
+- [ ] Receipt validation (StoreKit handles via `Transaction.currentEntitlements`)
+- [ ] Thank-you moment after purchase (confetti / haptic / custom toast)
+- [ ] StoreKit test configuration file for local testing
+
+## Phase 7 — Pre-submission
+
+- [ ] App icon: final 1024×1024 + all scale variants
+- [ ] Launch screen / splash
+- [ ] Screenshots: 6.9" / 6.5" / 13" iPad, all in both Light and Dark
+- [ ] App Store listing:
+  - [ ] Name & subtitle ("Kaaram" + "Telugu & South Indian Recipes")
+  - [ ] Description (lead with the why)
+  - [ ] Keywords (telugu, south indian, recipes, andhra, pulusu, pulihora…)
+  - [ ] Promotional text (changeable without resubmit)
+  - [ ] Support URL (GitHub Pages page is fine)
+- [ ] Privacy policy hosted publicly
+- [ ] **App Privacy** (nutrition label) filled in App Store Connect
+- [ ] TestFlight internal build → external beta (10–20 testers)
+- [ ] Fix critical bugs; confirm crash-free sessions > 99%
+- [ ] **Deploy CloudKit schema to Production** (easy to forget!)
+
+## Phase 8 — Launch
+
+- [ ] Submit for review
+- [ ] Announcement plan: social, r/IndianFood, r/TeluguPeople, Product Hunt, family WhatsApp
+- [ ] Post-launch monitoring: MetricKit reports, App Store reviews, TelemetryDeck events
+- [ ] Respond to reviews within 48h for the first 2 weeks
+
+## v1.1 backlog (unordered; user-validate before building)
+
+- Shopping list / ingredient checklist
+- Servings scaler that rewrites quantities
+- Meal planner (weekly)
+- Video steps (CKAsset videos, or YouTube embeds)
+- Telugu UI localization (full)
+- Apple Watch complication / glance
+- iPad-optimized layouts (two-column detail)
+- Siri Shortcuts ("Start cooking Pappu")
+- User-submitted recipes (huge scope — consider v2)
+
+---
+
+## Gotchas I should not forget
+
+1. **CloudKit Public schema** must be deployed to Production before App Store release.
+2. **Queryable/Sortable/Searchable** flags on fields — unindexed fields silently return empty queries.
+3. **CKAsset size** — compress hero images to <500 KB, thumbnails to <80 KB.
+4. **SwiftData + CloudKit**: all properties must be optional or have defaults.
+5. **App name "Kaaram"** — verify availability in App Store Connect ASAP.
+6. **Recipe copyright**: recipes aren't copyrightable but wording and photos are. Write my own or license.
+7. **Age rating**: 4+ for a food app.
+8. **Privacy nutrition label**: iCloud data stays with user; disclose any analytics.
+
+---
+
+## How to use this doc
+
+- Check off items as they finish.
+- Each phase ships in its own set of PRs; keep them reviewable (< 500 LoC where possible).
+- If scope grows, update this file in the same PR.
+- When an assumption breaks, add it to "Gotchas" above.
