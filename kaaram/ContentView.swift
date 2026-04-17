@@ -2,53 +2,44 @@
 //  ContentView.swift
 //  kaaram
 //
-//  Home screen placeholder. Renders the design system against mock
-//  recipe data — Phase 1 swaps the mocks for a CloudKit-backed repository.
+//  Home screen. Fetches published recipes via HomeViewModel and renders
+//  loading / loaded / empty / error states. Tapping a card pushes
+//  RecipeDetailView (stub until Checkpoint 4).
 //
 
 import SwiftUI
 
 struct ContentView: View {
-    // Mock data — replaced in Phase 1.
-    private let featured: [RecipeCardModel] = [
-        .init(nameEN: "Pappu", nameTE: "పప్పు", romanized: "pappu",
-              region: "Andhra", totalMinutes: 25, heroSystemImage: "bowl.fill"),
-        .init(nameEN: "Pulihora", nameTE: "పులిహోర", romanized: "pulihora",
-              region: "South Indian", totalMinutes: 30, heroSystemImage: "leaf.fill"),
-        .init(nameEN: "Gongura Pachadi", nameTE: "గోంగూర పచ్చడి", romanized: "gongura pachadi",
-              region: "Andhra", totalMinutes: 40, heroSystemImage: "flame.fill"),
-        .init(nameEN: "Bobbatlu", nameTE: "బొబ్బట్లు", romanized: "bobbatlu",
-              region: "Telangana", totalMinutes: 90, heroSystemImage: "moon.stars.fill")
-    ]
+    /// Repository injected via init so previews can pass a mock and the
+    /// app can pass CloudKit. Default is CloudKit for the live build.
+    @State private var viewModel: HomeViewModel
+
+    init(repository: RecipeRepository = CloudKitRecipeRepository()) {
+        _viewModel = State(initialValue: HomeViewModel(repository: repository))
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     header
-
-                    SectionHeader(title: "Featured today", action: {})
-                    LazyVGrid(
-                        columns: [GridItem(.flexible()), GridItem(.flexible())],
-                        spacing: Spacing.m
-                    ) {
-                        ForEach(featured) { RecipeCard(recipe: $0) }
-                    }
-
-                    SectionHeader(title: "Browse by region")
-                    HStack(spacing: Spacing.s) {
-                        Chip(text: "Andhra",       systemImage: "map",   style: .curry)
-                        Chip(text: "Telangana",    systemImage: "map",   style: .turmeric)
-                        Chip(text: "South Indian", systemImage: "globe", style: .spice)
-                    }
+                    content
+                    regions
                 }
                 .padding(Spacing.l)
             }
             .background(Color.kaaramBackground)
             .navigationTitle("Kaaram")
             .navigationBarTitleDisplayMode(.large)
+            .navigationDestination(for: Recipe.self) { recipe in
+                RecipeDetailView(recipe: recipe)
+            }
+            .refreshable { await viewModel.reload() }
         }
+        .task { await viewModel.loadIfNeeded() }
     }
+
+    // MARK: - Subviews
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -60,8 +51,113 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
     }
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.state {
+        case .idle, .loading:
+            loadingState
+        case .loaded(let recipes):
+            loadedGrid(recipes)
+        case .empty:
+            emptyState
+        case .error(let message):
+            errorState(message)
+        }
+    }
+
+    private var loadingState: some View {
+        VStack(spacing: Spacing.m) {
+            ProgressView()
+            Text("Loading recipes…")
+                .font(.kaaramCallout)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 280)
+    }
+
+    private func loadedGrid(_ recipes: [Recipe]) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            SectionHeader(title: "Featured today")
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: Spacing.m
+            ) {
+                ForEach(recipes) { recipe in
+                    NavigationLink(value: recipe) {
+                        RecipeCard(recipe: recipe)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: Spacing.m) {
+            Image(systemName: "tray")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("No recipes yet.")
+                .font(.kaaramHeadline)
+            Text("Check back soon.")
+                .font(.kaaramCallout)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 280)
+    }
+
+    private func errorState(_ message: String) -> some View {
+        VStack(spacing: Spacing.m) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundStyle(Color.kaaramSpice)
+            Text("Something went wrong")
+                .font(.kaaramHeadline)
+            Text(message)
+                .font(.kaaramCallout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("Try again") {
+                Task { await viewModel.reload() }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.kaaramSpice)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 280)
+    }
+
+    private var regions: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionHeader(title: "Browse by region")
+            HStack(spacing: Spacing.s) {
+                Chip(text: "Andhra",       systemImage: "map",   style: .curry)
+                Chip(text: "Telangana",    systemImage: "map",   style: .turmeric)
+                Chip(text: "South Indian", systemImage: "globe", style: .spice)
+            }
+        }
+    }
 }
 
-#Preview {
-    ContentView()
+// MARK: - Previews
+
+#Preview("Loaded") {
+    ContentView(repository: MockRecipeRepository())
+}
+
+#Preview("Empty") {
+    ContentView(repository: MockRecipeRepository(recipes: []))
+}
+
+#Preview("Error") {
+    struct FailingRepo: RecipeRepository {
+        func fetchPublished() async throws -> [Recipe] {
+            throw RecipeRepositoryError.networkUnavailable
+        }
+        func fetchRecipe(slug: String) async throws -> Recipe {
+            throw RecipeRepositoryError.notFound
+        }
+    }
+    return ContentView(repository: FailingRepo())
 }
