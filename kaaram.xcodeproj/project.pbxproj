@@ -27,6 +27,8 @@
 		CC7194562F92BC2C00F48622 /* kaaram.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kaaram.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC7194672F92BC3000F48622 /* kaaramTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kaaramTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC7194712F92BC3000F48622 /* kaaramUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kaaramUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC71948A0000000000000001 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		CC71948A0000000000000002 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -88,6 +90,8 @@
 		CC71944D2F92BC2C00F48622 = {
 			isa = PBXGroup;
 			children = (
+				CC71948A0000000000000001 /* README.md */,
+				CC71948A0000000000000002 /* .gitignore */,
 				CC7194582F92BC2C00F48622 /* kaaram */,
 				CC71946A2F92BC3000F48622 /* kaaramTests */,
 				CC7194742F92BC3000F48622 /* kaaramUITests */,
