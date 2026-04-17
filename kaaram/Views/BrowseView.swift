@@ -2,8 +2,9 @@
 //  BrowseView.swift
 //  kaaram
 //
-//  Search & filter screen. Checkpoint 1 ships text search over the
-//  cached recipe set; Checkpoint 2 will add filter chips and sort.
+//  Search & filter screen. Text search (.searchable in nav bar) +
+//  region chip row below + toolbar menu combining Sort and Category.
+//  All filtering happens client-side over the cached recipe set.
 //
 
 import SwiftUI
@@ -17,24 +18,101 @@ struct BrowseView: View {
 
     var body: some View {
         NavigationStack {
-            content
-                .background(Color.kaaramBackground)
-                .navigationTitle("Browse")
-                .navigationBarTitleDisplayMode(.large)
-                .searchable(
-                    text: $viewModel.searchText,
-                    placement: .navigationBarDrawer(displayMode: .always),
-                    prompt: "Search recipes, ingredients, tags"
-                )
-                .navigationDestination(for: Recipe.self) { recipe in
-                    RecipeDetailView(recipe: recipe)
+            VStack(spacing: 0) {
+                regionFilterRow
+                    .padding(.bottom, Spacing.s)
+
+                content
+            }
+            .background(Color.kaaramBackground)
+            .navigationTitle("Browse")
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(
+                text: $viewModel.searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Search recipes, ingredients, tags"
+            )
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    sortAndCategoryMenu
                 }
-                .refreshable { await viewModel.reload() }
+            }
+            .navigationDestination(for: Recipe.self) { recipe in
+                RecipeDetailView(recipe: recipe)
+            }
+            .refreshable { await viewModel.reload() }
         }
         .task { await viewModel.loadIfNeeded() }
     }
 
-    // MARK: - Subviews
+    // MARK: - Region chips
+
+    private var regionFilterRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.xs) {
+                FilterChip(
+                    title: "All",
+                    isSelected: viewModel.selectedRegion == nil
+                ) {
+                    viewModel.selectedRegion = nil
+                }
+
+                ForEach(Recipe.Region.allCases.filter { $0 != .other }, id: \.self) { region in
+                    FilterChip(
+                        title: region.shortName,
+                        isSelected: viewModel.selectedRegion == region
+                    ) {
+                        viewModel.selectedRegion =
+                            (viewModel.selectedRegion == region) ? nil : region
+                    }
+                }
+            }
+            .padding(.horizontal, Spacing.l)
+            .padding(.vertical, Spacing.s)
+        }
+    }
+
+    // MARK: - Sort + Category menu
+
+    private var sortAndCategoryMenu: some View {
+        Menu {
+            Section("Sort by") {
+                Picker("Sort", selection: $viewModel.sort) {
+                    ForEach(BrowseViewModel.Sort.allCases) { option in
+                        Label(option.rawValue, systemImage: option.systemImage)
+                            .tag(option)
+                    }
+                }
+            }
+
+            Section("Category") {
+                Picker("Category", selection: $viewModel.selectedCategory) {
+                    Text("All").tag(Recipe.Category?.none)
+                    ForEach(Recipe.Category.allCases.filter { $0 != .other }, id: \.self) { category in
+                        Text(category.displayName).tag(Recipe.Category?.some(category))
+                    }
+                }
+            }
+
+            if viewModel.hasActiveFilters {
+                Divider()
+                Button(role: .destructive) {
+                    viewModel.clearFilters()
+                } label: {
+                    Label("Clear filters", systemImage: "xmark.circle")
+                }
+            }
+        } label: {
+            Image(systemName: viewModel.hasActiveFilters
+                  ? "line.3.horizontal.decrease.circle.fill"
+                  : "line.3.horizontal.decrease.circle")
+                .foregroundStyle(
+                    viewModel.hasActiveFilters ? Color.kaaramSpice : .primary
+                )
+        }
+    }
+
+    // MARK: - Content
 
     @ViewBuilder
     private var content: some View {
@@ -74,32 +152,44 @@ struct BrowseView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(Spacing.l)
+                .padding(.horizontal, Spacing.l)
+                .padding(.top, Spacing.xs)
+                .padding(.bottom, Spacing.l)
             }
         }
     }
 
     @ViewBuilder
     private var noResultsState: some View {
-        let isSearching = !viewModel.searchText
+        let isFiltering = !viewModel.searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty
+            .isEmpty || viewModel.hasActiveFilters
 
         VStack(spacing: Spacing.m) {
-            Image(systemName: isSearching ? "magnifyingglass" : "tray")
+            Image(systemName: isFiltering ? "magnifyingglass" : "tray")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
 
-            Text(isSearching ? "No matches" : "No recipes yet")
+            Text(isFiltering ? "No matches" : "No recipes yet")
                 .font(.kaaramHeadline)
 
-            Text(isSearching
-                 ? "Try a different word — recipe names, ingredients, or tags."
+            Text(isFiltering
+                 ? "Try a different word or clear filters."
                  : "Check back soon.")
                 .font(.kaaramCallout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xl)
+
+            if isFiltering {
+                Button("Clear filters") {
+                    viewModel.searchText = ""
+                    viewModel.clearFilters()
+                }
+                .font(.kaaramCallout)
+                .padding(.top, Spacing.s)
+                .foregroundStyle(Color.kaaramSpice)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
