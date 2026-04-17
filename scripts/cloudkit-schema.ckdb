@@ -1,0 +1,31 @@
+DEFINE SCHEMA
+
+    RECORD TYPE Recipe (
+        "___createTime"  TIMESTAMP,
+        "___createdBy"   REFERENCE,
+        "___etag"        STRING,
+        "___modTime"     TIMESTAMP,
+        "___modifiedBy"  REFERENCE,
+        "___recordID"    REFERENCE QUERYABLE,
+        nameEN           STRING QUERYABLE SEARCHABLE,
+        nameTE           STRING,
+        nameRomanized    STRING QUERYABLE SEARCHABLE,
+        slug             STRING QUERYABLE,
+        summary          STRING,
+        category         STRING QUERYABLE,
+        region           STRING QUERYABLE,
+        difficulty       INT64 SORTABLE,
+        totalMinutes     INT64 SORTABLE,
+        servings         INT64,
+        heroImage        ASSET,
+        thumbnailImage   ASSET,
+        ingredientsJSON  STRING,
+        stepsJSON        STRING,
+        tags             LIST<STRING> QUERYABLE,
+        isPublished      INT64 QUERYABLE,
+        publishedAt      TIMESTAMP SORTABLE,
+        schemaVersion    INT64,
+        GRANT WRITE TO "_creator",
+        GRANT READ TO "_world",
+        GRANT CREATE TO "_creator"
+    );

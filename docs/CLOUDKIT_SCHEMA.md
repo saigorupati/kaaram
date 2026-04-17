@@ -68,15 +68,55 @@ Stored via SwiftData with `ModelConfiguration(cloudKitDatabase: .private)`. Not 
 
 ---
 
-## Setup checklist (manual, one-time)
+## Setup checklist
 
-1. Enable CloudKit capability in Xcode for the `kaaram` target (already set in `kaaram.entitlements`).
-2. In [CloudKit Console](https://icloud.developer.apple.com/dashboard/), open container `iCloud.com.saigorupati.kaaram`.
-3. Under **Schema → Record Types**, create `Recipe` with the fields above. Mark indexes exactly as the table specifies. **This is the #1 gotcha** — unindexed fields silently return no results in queries.
-4. In **Security Roles**, ensure `_world` has **Read** on `Recipe`. (No write for the public — only you, as the container owner, write via Console.)
-5. Add a Queryable system index on `recordName` for `Recipe` (needed for `CKQuery` with `NSPredicate(value: true)`).
-6. Enter ~5 seed recipes in Development environment.
-7. **Before App Store submission**: click **Deploy Schema Changes** to push to Production. Forgetting this = empty app in prod.
+The whole schema is defined in [`scripts/cloudkit-schema.ckdb`](../scripts/cloudkit-schema.ckdb) and imported with one command. You do NOT need to click 18 "Add Field" buttons in the web UI.
+
+### One-time prerequisites
+
+1. **Paid Apple Developer account** and signed in to Xcode (Xcode → Settings → Accounts).
+2. **CloudKit container exists.** Open `kaaram.xcodeproj`, select the `kaaram` target → Signing & Capabilities → confirm iCloud/CloudKit container `iCloud.com.saigorupati.kaaram` is listed (Xcode auto-creates it on the server). If there's a warning triangle, click refresh.
+3. **CloudKit Management Token.**
+   - Visit https://icloud.developer.apple.com/dashboard/
+   - Top-right **Team** menu → **Manage Tokens**
+   - **Create Token** → role: **Admin** → copy the token
+   - On your Mac:
+     ```
+     xcrun cktool save-token --type management
+     ```
+     Paste the token when prompted.
+
+### Import the schema
+
+```
+./scripts/import-cloudkit-schema.sh
+```
+
+That's it. The script validates, then imports, then prints a URL to verify in the Console. It's idempotent — safe to re-run after schema edits.
+
+### Seed a test recipe
+
+Option A — CloudKit Console (browser):
+- Data → Development → Public Database → Recipe → New Record → set `slug = test`, `nameEN = Test`, `isPublished = 1` → Save.
+
+Option B — `cktool`:
+```
+xcrun cktool create-record \
+  --team-id TUA96GSK9L \
+  --container-id iCloud.com.saigorupati.kaaram \
+  --database-type PUBLIC \
+  --environment DEVELOPMENT \
+  --record-type Recipe \
+  --fields nameEN=Test --fields slug=test --fields isPublished=1
+```
+
+### Deploy to Production (Phase 7 only — don't do this yet)
+
+```
+./scripts/import-cloudkit-schema.sh PRODUCTION
+```
+
+Or click **Deploy Schema to Production** in the Console. Forgetting this step = empty app in prod.
 
 ## Recipe authoring workflow
 
