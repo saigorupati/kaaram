@@ -32,6 +32,12 @@ struct BrowseView: View {
                 placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "Search recipes, ingredients, tags"
             )
+            .onSubmit(of: .search) {
+                viewModel.commitSearch()
+            }
+            .searchSuggestions {
+                recentSearchSuggestions
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     sortAndCategoryMenu
@@ -109,6 +115,26 @@ struct BrowseView: View {
                 .foregroundStyle(
                     viewModel.hasActiveFilters ? Color.kaaramSpice : .primary
                 )
+        }
+    }
+
+    // MARK: - Search suggestions
+
+    /// Rendered under the search field while focused. Shows recent
+    /// searches (tap to fill and submit), with a Clear All row.
+    @ViewBuilder
+    private var recentSearchSuggestions: some View {
+        if viewModel.searchText.isEmpty && !viewModel.recentSearches.isEmpty {
+            ForEach(viewModel.recentSearches, id: \.self) { term in
+                Label(term, systemImage: "clock.arrow.circlepath")
+                    .searchCompletion(term)
+            }
+
+            Button(role: .destructive) {
+                viewModel.clearRecents()
+            } label: {
+                Label("Clear recent searches", systemImage: "trash")
+            }
         }
     }
 

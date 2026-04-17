@@ -39,6 +39,7 @@ final class BrowseViewModel {
 
     private(set) var state: State = .loading
     private(set) var allRecipes: [Recipe] = []
+    private(set) var recentSearches: [String] = []
 
     /// Binding target for `.searchable`.
     var searchText: String = ""
@@ -52,9 +53,15 @@ final class BrowseViewModel {
     var sort: Sort = .newest
 
     private let repository: RecipeRepository
+    private let recents: RecentSearchesStore
 
-    init(repository: RecipeRepository) {
+    init(
+        repository: RecipeRepository,
+        recents: RecentSearchesStore = RecentSearchesStore()
+    ) {
         self.repository = repository
+        self.recents = recents
+        self.recentSearches = recents.all()
     }
 
     // MARK: - Load
@@ -134,6 +141,31 @@ final class BrowseViewModel {
     func clearFilters() {
         selectedRegion = nil
         selectedCategory = nil
+    }
+
+    // MARK: - Recent searches
+
+    /// Call when the user submits a search (taps return). Saves the
+    /// current `searchText` to recents, deduped and capped.
+    func commitSearch() {
+        recents.add(searchText)
+        recentSearches = recents.all()
+    }
+
+    func useRecent(_ term: String) {
+        searchText = term
+        recents.add(term) // bumps to top
+        recentSearches = recents.all()
+    }
+
+    func removeRecent(_ term: String) {
+        recents.remove(term)
+        recentSearches = recents.all()
+    }
+
+    func clearRecents() {
+        recents.clear()
+        recentSearches = []
     }
 
     // MARK: - Error mapping
