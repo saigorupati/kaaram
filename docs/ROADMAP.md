@@ -56,14 +56,16 @@ Monetization: Free, with a tip jar (no feature gating).
 - [x] Palak Paneer seeded via `./scripts/seed-recipes.sh`
 - [ ] **Deferred**: real hero images, pagination (`CKQueryOperation`), seed more recipes
 
-## Phase 2 — Search & filters
+## Phase 2 — Search & filters ✅
 
-- [ ] Search box on Browse tab; query by `nameRomanized CONTAINS[c]`
-- [ ] Category chips (breakfast, curry, pickle, sweet, festive, tiffin, rice, chutney, snack)
-- [ ] Region filter (Andhra / Telangana / South Indian)
-- [ ] Tag filter (vegetarian, glutenfree, kidfriendly…)
-- [ ] Sort: Newest, Quickest, Easiest
-- [ ] Recent-searches list (on-device only)
+- [x] TabView root (Home / Browse) with kaaram-spice tint
+- [x] Browse tab with `.searchable` (EN + romanized + Telugu literal + summary + tags)
+- [x] Region filter chips (selectable pills with haptic) below search
+- [x] Category filter in toolbar menu (picker with 9 cases + "All")
+- [x] Sort in toolbar menu: Newest / Quickest / Easiest
+- [x] Clear-filters affordances (menu + empty state)
+- [x] Recent searches persisted in UserDefaults; shown via `.searchSuggestions`; tap to reuse + clear-all
+- [ ] **Deferred**: Tag filter (less urgent with the search box doing the job)
 
 ## Phase 3 — Step-by-step cooking mode
 
