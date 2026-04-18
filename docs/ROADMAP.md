@@ -77,14 +77,18 @@ Monetization: Free, with a tip jar (no feature gating).
 - [x] "You did it!" completion page with Done button + success haptic
 - [ ] **Deferred**: Live Activity for timer, wall-clock math for true background accuracy
 
-## Phase 4 — Favorites & notes
+## Phase 4 — Favorites & notes ✅
 
-- [ ] `FavoriteRecipe` SwiftData model → CloudKit Private DB sync
-- [ ] `RecipeNote` SwiftData model → CloudKit Private DB sync
-- [ ] Heart button on Recipe detail + cards
-- [ ] Favorites tab with local-first list, sorted by `favoritedAt`
-- [ ] Note editor on Recipe detail (markdown-lite)
-- [ ] Graceful degradation when user is signed out of iCloud
+- [x] `FavoriteRecipe` + `RecipeNote` SwiftData models with CloudKit private DB sync
+- [x] Two-store ModelContainer (local cache + synced user data) with in-memory fallback
+- [x] Heart button on Recipe detail wired to `@Query` + `modelContext`; symbol morph transition
+- [x] Heart badges on Home cards (top-right overlay) and Browse rows (inline)
+- [x] `favoriteSlugs` environment key fed by a single root-level `@Query`
+- [x] Favorites tab with `favoritedAt`-ordered list; context-menu unfavorite
+- [x] Extracted shared `RecipeRow` component (used by Browse + Favorites)
+- [x] Note editor sheet: `TextEditor` with save/cancel, detents, keyboard delete; clearing text removes the note
+- [x] Notes section on Recipe detail with pencil/plus state icon
+- [x] Graceful degradation — on signed-out iCloud, SwiftData stays local
 
 ## Phase 5 — Localization & a11y polish
 
