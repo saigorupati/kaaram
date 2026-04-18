@@ -32,6 +32,9 @@ struct ContentView: View {
 
             BrowseView(repository: repository)
                 .tabItem { Label("Browse", systemImage: "magnifyingglass") }
+
+            FavoritesView(repository: repository)
+                .tabItem { Label("Favorites", systemImage: "heart.fill") }
         }
         .tint(.kaaramSpice)
         .environment(\.favoriteSlugs, favoriteSlugs)
