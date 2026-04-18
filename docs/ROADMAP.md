@@ -67,14 +67,15 @@ Monetization: Free, with a tip jar (no feature gating).
 - [x] Recent searches persisted in UserDefaults; shown via `.searchSuggestions`; tap to reuse + clear-all
 - [ ] **Deferred**: Tag filter (less urgent with the search box doing the job)
 
-## Phase 3 — Step-by-step cooking mode
+## Phase 3 — Step-by-step cooking mode ✅
 
-- [ ] Full-screen, swipeable step view with large type
-- [ ] Per-step inline timer with progress ring
-- [ ] Keep-awake while active (`isIdleTimerDisabled = true`)
-- [ ] Haptics on step advance / timer completion
-- [ ] "Complete" summary screen
-- [ ] Live Activity for active timer (nice-to-have; defer if tight)
+- [x] Full-screen swipeable step view with large serif type
+- [x] Segmented spice-colored progress bar (one capsule per step)
+- [x] Per-step countdown timer with progress ring and start/pause/reset
+- [x] Keep-awake while active (`isIdleTimerDisabled = true`, scoped)
+- [x] Soft haptic on step advance; success haptic on timer completion
+- [x] "You did it!" completion page with Done button + success haptic
+- [ ] **Deferred**: Live Activity for timer, wall-clock math for true background accuracy
 
 ## Phase 4 — Favorites & notes
 
