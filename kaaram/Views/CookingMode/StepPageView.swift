@@ -2,10 +2,10 @@
 //  StepPageView.swift
 //  kaaram
 //
-//  One page of the cooking-mode TabView. Optimized for reading
-//  at arm's length while cooking: big serif body text, high contrast,
-//  generous padding. Timer slot is placeholder today; CP2 adds the
-//  real countdown component.
+//  One page of the cooking-mode TabView. Optimized for reading at
+//  arm's length while cooking: big serif body text, high contrast,
+//  generous padding. Steps with a durationSec show a full interactive
+//  StepTimerView beneath the instruction.
 //
 
 import SwiftUI
@@ -28,7 +28,9 @@ struct StepPageView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let seconds = step.durationSec {
-                    timerPlaceholder(seconds: seconds)
+                    StepTimerView(totalSeconds: seconds)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, Spacing.m)
                 }
 
                 Spacer(minLength: Spacing.xl)
@@ -50,38 +52,27 @@ struct StepPageView: View {
                 .foregroundStyle(.tertiary)
         }
     }
-
-    /// Placeholder until CP2 swaps in a real countdown StepTimerView.
-    private func timerPlaceholder(seconds: Int) -> some View {
-        HStack(spacing: Spacing.s) {
-            Image(systemName: "timer")
-            Text(Self.format(seconds: seconds))
-        }
-        .font(.kaaramHeadline)
-        .foregroundStyle(Color.kaaramTurmeric)
-        .padding(.horizontal, Spacing.l)
-        .padding(.vertical, Spacing.m)
-        .background(
-            Color.kaaramTurmeric.opacity(0.15),
-            in: Capsule()
-        )
-    }
-
-    private static func format(seconds: Int) -> String {
-        if seconds < 60 { return "\(seconds) sec" }
-        let m = seconds / 60
-        let s = seconds % 60
-        return s == 0 ? "\(m) min" : "\(m)m \(s)s"
-    }
 }
 
-#Preview {
+#Preview("With timer") {
     StepPageView(
         number: 2,
         total: 9,
         step: .init(
             text: "Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly. Add green chilies, onion, and tomato. Cover and cook on low for 5 minutes until soft.",
-            durationSec: 420
+            durationSec: 300
+        )
+    )
+    .background(Color.kaaramBackground)
+}
+
+#Preview("No timer") {
+    StepPageView(
+        number: 3,
+        total: 9,
+        step: .init(
+            text: "Blend the cooked onion-tomato mixture with the spinach into a smooth paste.",
+            durationSec: nil
         )
     )
     .background(Color.kaaramBackground)
