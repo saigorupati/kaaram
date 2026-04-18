@@ -5,24 +5,51 @@
 //  Full recipe detail: hero image, bilingual name, meta chips, actions,
 //  sectioned ingredients list, and numbered steps with timer badges.
 //
-//  Not yet persisted: favorite toggle (Phase 4 wires SwiftData sync).
+//  Favorite state is persisted via SwiftData (FavoriteRecipe model),
+//  synced to the user's CloudKit private database.
 //  Start Cooking opens the full-screen step-by-step cooking mode.
 //
 
+import SwiftData
 import SwiftUI
 
 struct RecipeDetailView: View {
     let recipe: Recipe
 
-    // Favorite state is ephemeral until Phase 4 introduces SwiftData
-    // sync of user favorites to the CloudKit private database.
-    @State private var isFavorited: Bool = false
+    @Environment(\.modelContext) private var modelContext
+
+    /// Live query for this recipe's favorite row. Either empty or size 1.
+    @Query private var matchingFavorites: [FavoriteRecipe]
 
     // Full-screen cooking mode presentation.
     @State private var isCookingModeActive: Bool = false
 
     // Haptic generators for the favorite toggle.
     private let haptic = UIImpactFeedbackGenerator(style: .soft)
+
+    init(recipe: Recipe) {
+        self.recipe = recipe
+        let slug = recipe.slug
+        _matchingFavorites = Query(
+            filter: #Predicate<FavoriteRecipe> { $0.slug == slug }
+        )
+    }
+
+    private var isFavorited: Bool {
+        !matchingFavorites.isEmpty
+    }
+
+    private func toggleFavorite() {
+        haptic.impactOccurred()
+        if let existing = matchingFavorites.first {
+            modelContext.delete(existing)
+        } else {
+            modelContext.insert(FavoriteRecipe(slug: recipe.slug))
+        }
+        // SwiftData autosaves, but an explicit save lets CloudKit
+        // sync fire sooner on device.
+        try? modelContext.save()
+    }
 
     var body: some View {
         ScrollView {
@@ -164,12 +191,12 @@ struct RecipeDetailView: View {
     private var actionRow: some View {
         HStack(spacing: Spacing.m) {
             Button {
-                haptic.impactOccurred()
-                isFavorited.toggle()
+                toggleFavorite()
             } label: {
                 Image(systemName: isFavorited ? "heart.fill" : "heart")
                     .font(.title3)
                     .foregroundStyle(isFavorited ? Color.kaaramSpice : .secondary)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 56, height: 56)
                     .background(
                         Color.kaaramSurface,
@@ -180,6 +207,7 @@ struct RecipeDetailView: View {
                             .stroke(Color.kaaramSpice.opacity(isFavorited ? 0.5 : 0), lineWidth: 1)
                     )
             }
+            .animation(.snappy, value: isFavorited)
             .accessibilityLabel(isFavorited ? "Remove from favorites" : "Add to favorites")
 
             Button {
@@ -394,10 +422,12 @@ private struct StepRow: View {
     NavigationStack {
         RecipeDetailView(recipe: .palakPaneer)
     }
+    .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }
 
 #Preview("Sparse (Pappu)") {
     NavigationStack {
         RecipeDetailView(recipe: .pappu)
     }
+    .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }

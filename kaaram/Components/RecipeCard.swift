@@ -4,13 +4,21 @@
 //
 //  Card view for a recipe. Shows a hero image via AsyncImage when the
 //  recipe has one, otherwise a colorful category-based gradient with
-//  an SF Symbol. Meta chips for region and cook time.
+//  an SF Symbol. Meta chips for region and cook time. Top-right corner
+//  displays a heart badge when the recipe is in the user's favorites
+//  (read from @Environment(\.favoriteSlugs)).
 //
 
 import SwiftUI
 
 struct RecipeCard: View {
     let recipe: Recipe
+
+    @Environment(\.favoriteSlugs) private var favoriteSlugs
+
+    private var isFavorited: Bool {
+        favoriteSlugs.contains(recipe.slug)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
@@ -43,8 +51,24 @@ struct RecipeCard: View {
         .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
     }
 
+    // MARK: - Hero
+
     @ViewBuilder
     private var hero: some View {
+        ZStack(alignment: .topTrailing) {
+            heroImage
+
+            if isFavorited {
+                heartBadge
+                    .padding(Spacing.s)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.snappy, value: isFavorited)
+    }
+
+    @ViewBuilder
+    private var heroImage: some View {
         if let url = recipe.heroImageURL {
             AsyncImage(url: url) { phase in
                 switch phase {
@@ -85,6 +109,16 @@ struct RecipeCard: View {
             }
     }
 
+    private var heartBadge: some View {
+        Image(systemName: "heart.fill")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(6)
+            .background(Color.kaaramSpice, in: Circle())
+            .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+            .accessibilityLabel("Favorited")
+    }
+
     /// Maps a category to an SF Symbol for the no-image fallback.
     private static func symbol(for category: Recipe.Category) -> String {
         switch category {
@@ -112,4 +146,6 @@ struct RecipeCard: View {
         .padding()
     }
     .background(Color.kaaramBackground)
+    // Simulate two recipes being favorited.
+    .environment(\.favoriteSlugs, ["palak-paneer", "pulihora"])
 }

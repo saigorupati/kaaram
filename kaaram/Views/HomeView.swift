@@ -6,6 +6,7 @@
 //  extracted when the app grew a TabView.
 //
 
+import SwiftData
 import SwiftUI
 
 struct HomeView: View {
@@ -139,8 +140,10 @@ struct HomeView: View {
 
 #Preview("Loaded") {
     HomeView(repository: MockRecipeRepository())
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }
 
 #Preview("Empty") {
     HomeView(repository: MockRecipeRepository(recipes: []))
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }

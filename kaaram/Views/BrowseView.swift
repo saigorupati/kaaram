@@ -7,6 +7,7 @@
 //  All filtering happens client-side over the cached recipe set.
 //
 
+import SwiftData
 import SwiftUI
 
 struct BrowseView: View {
@@ -249,14 +250,28 @@ struct BrowseView: View {
 private struct BrowseRow: View {
     let recipe: Recipe
 
+    @Environment(\.favoriteSlugs) private var favoriteSlugs
+
+    private var isFavorited: Bool {
+        favoriteSlugs.contains(recipe.slug)
+    }
+
     var body: some View {
         HStack(spacing: Spacing.m) {
             thumbnail
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(recipe.nameEN)
-                    .font(.kaaramHeadline)
-                    .lineLimit(1)
+                HStack(spacing: Spacing.xs) {
+                    Text(recipe.nameEN)
+                        .font(.kaaramHeadline)
+                        .lineLimit(1)
+                    if isFavorited {
+                        Image(systemName: "heart.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.kaaramSpice)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
                 if !recipe.nameTE.isEmpty {
                     Text(recipe.nameTE)
                         .font(.kaaramTelugu)
@@ -285,6 +300,7 @@ private struct BrowseRow: View {
             Color.kaaramSurface,
             in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
         )
+        .animation(.snappy, value: isFavorited)
     }
 
     @ViewBuilder
@@ -327,8 +343,10 @@ private struct BrowseRow: View {
 
 #Preview("Loaded") {
     BrowseView(repository: MockRecipeRepository())
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }
 
 #Preview("Empty") {
     BrowseView(repository: MockRecipeRepository(recipes: []))
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }
