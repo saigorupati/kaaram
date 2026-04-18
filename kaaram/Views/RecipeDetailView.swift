@@ -21,8 +21,14 @@ struct RecipeDetailView: View {
     /// Live query for this recipe's favorite row. Either empty or size 1.
     @Query private var matchingFavorites: [FavoriteRecipe]
 
+    /// Live query for this recipe's note. Either empty or size 1.
+    @Query private var matchingNotes: [RecipeNote]
+
     // Full-screen cooking mode presentation.
     @State private var isCookingModeActive: Bool = false
+
+    // Notes editor sheet.
+    @State private var isNotesEditorPresented: Bool = false
 
     // Haptic generators for the favorite toggle.
     private let haptic = UIImpactFeedbackGenerator(style: .soft)
@@ -33,7 +39,12 @@ struct RecipeDetailView: View {
         _matchingFavorites = Query(
             filter: #Predicate<FavoriteRecipe> { $0.slug == slug }
         )
+        _matchingNotes = Query(
+            filter: #Predicate<RecipeNote> { $0.slug == slug }
+        )
     }
+
+    private var userNote: RecipeNote? { matchingNotes.first }
 
     private var isFavorited: Bool {
         !matchingFavorites.isEmpty
@@ -67,6 +78,7 @@ struct RecipeDetailView: View {
                     }
                     tagsSection
                     actionRow
+                    notesSection
                     ingredientsSection
                     stepsSection
                 }
@@ -90,6 +102,9 @@ struct RecipeDetailView: View {
         }
         .fullScreenCover(isPresented: $isCookingModeActive) {
             CookingModeView(recipe: recipe)
+        }
+        .sheet(isPresented: $isNotesEditorPresented) {
+            NoteEditorSheet(slug: recipe.slug)
         }
     }
 
@@ -184,6 +199,52 @@ struct RecipeDetailView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Notes
+
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionHeader(title: "Your notes")
+
+            Button {
+                isNotesEditorPresented = true
+            } label: {
+                noteCard
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var noteCard: some View {
+        let body = userNote?.body ?? ""
+        let hasNote = !body.isEmpty
+
+        return HStack(alignment: .top, spacing: Spacing.m) {
+            if hasNote {
+                Text(body)
+                    .font(.kaaramBody)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+            } else {
+                Text("Tap to add your own notes, tweaks, or memories.")
+                    .font(.kaaramCallout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer(minLength: Spacing.s)
+
+            Image(systemName: hasNote ? "pencil" : "plus.circle.fill")
+                .font(.title3)
+                .foregroundStyle(Color.kaaramSpice)
+        }
+        .padding(Spacing.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.kaaramSurface,
+            in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
+        )
     }
 
     // MARK: - Action row
