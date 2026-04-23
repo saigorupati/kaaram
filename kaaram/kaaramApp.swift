@@ -10,6 +10,11 @@
 //                  CloudKit private database so it follows their Apple
 //                  ID across devices.
 //
+//  In DEBUG builds running on the simulator, the app swaps the real
+//  CloudKit repository for `MockRecipeRepository` so the UI loads
+//  instantly with preview recipes (no iCloud sign-in / schema deploy
+//  required). Device + Release builds always use CloudKit.
+//
 
 import SwiftData
 import SwiftUI
@@ -88,9 +93,15 @@ struct kaaramApp: App {
 
     // MARK: - Repository
 
+    /// Simulator + DEBUG → mock data (no CloudKit, loads instantly).
+    /// Device or Release → CachingRecipeRepository(CloudKit, SwiftData cache).
     private static func buildRepository(using container: ModelContainer) -> RecipeRepository {
+        #if DEBUG && targetEnvironment(simulator)
+        return MockRecipeRepository()
+        #else
         let remote = CloudKitRecipeRepository()
         let cache = RecipeCache(modelContainer: container)
         return CachingRecipeRepository(remote: remote, cache: cache)
+        #endif
     }
 }

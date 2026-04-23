@@ -1,0 +1,67 @@
+{
+  "nameEN": {
+    "type": "stringType",
+    "value": "Tomato Rasam"
+  },
+  "nameRomanized": {
+    "type": "stringType",
+    "value": "tomato rasam"
+  },
+  "slug": {
+    "type": "stringType",
+    "value": "tomato-rasam"
+  },
+  "category": {
+    "type": "stringType",
+    "value": "other"
+  },
+  "region": {
+    "type": "stringType",
+    "value": "south-indian"
+  },
+  "ingredientsJSON": {
+    "type": "stringType",
+    "value": "[{\"item\":\"tomatoes\",\"section\":\"For the tomato juice\",\"qty\":\"500\",\"unit\":\"g\",\"notes\":\"cut into large pieces\"},{\"item\":\"tamarind\",\"section\":\"For the tomato juice\",\"qty\":\"20\",\"unit\":\"g\",\"notes\":\"about lemon-sized\"},{\"item\":\"water\",\"section\":\"For the tomato juice\",\"qty\":\"4\",\"unit\":\"cups\",\"notes\":\"about 1 liter\"},{\"item\":\"toor dal\",\"section\":\"For the rasam powder\",\"qty\":\"1\",\"unit\":\"tbsp\"},{\"item\":\"coriander seeds\",\"section\":\"For the rasam powder\",\"qty\":\"1\",\"unit\":\"tsp\"},{\"item\":\"cumin seeds\",\"section\":\"For the rasam powder\",\"qty\":\"1/2\",\"unit\":\"tsp\"},{\"item\":\"fenugreek seeds\",\"section\":\"For the rasam powder\",\"qty\":\"1/4\",\"unit\":\"tsp\"},{\"item\":\"dried red chilies\",\"section\":\"For the rasam powder\",\"qty\":\"3-4\"},{\"item\":\"black pepper\",\"section\":\"For the rasam powder\",\"qty\":\"1\",\"unit\":\"tsp\"},{\"item\":\"garlic cloves\",\"section\":\"For the rasam powder\",\"qty\":\"5-6\",\"notes\":\"added last, blended coarsely into the powder\"},{\"item\":\"turmeric powder\",\"section\":\"For the rasam\",\"qty\":\"1/2\",\"unit\":\"tsp\"},{\"item\":\"salt\",\"section\":\"For the rasam\",\"notes\":\"to taste\"},{\"item\":\"fresh coriander\",\"section\":\"For the rasam\",\"qty\":\"a little\",\"notes\":\"crushed by hand\"},{\"item\":\"curry leaves\",\"section\":\"For the rasam\",\"qty\":\"a bit\",\"notes\":\"crushed\"},{\"item\":\"green chilies\",\"section\":\"For the rasam\",\"qty\":\"2\",\"notes\":\"slit\"},{\"item\":\"oil\",\"section\":\"For tempering\",\"qty\":\"1\",\"unit\":\"tbsp\"},{\"item\":\"chana dal\",\"section\":\"For tempering\"},{\"item\":\"urad dal\",\"section\":\"For tempering\"},{\"item\":\"mustard seeds\",\"section\":\"For tempering\"},{\"item\":\"cumin seeds\",\"section\":\"For tempering\"},{\"item\":\"dried red chilies\",\"section\":\"For tempering\"},{\"item\":\"garlic cloves\",\"section\":\"For tempering\",\"qty\":\"a few\",\"notes\":\"chopped\"},{\"item\":\"curry leaves\",\"section\":\"For tempering\",\"qty\":\"a bit\"},{\"item\":\"fresh coriander\",\"section\":\"For tempering\",\"qty\":\"some\",\"notes\":\"finely chopped, to finish\"}]"
+  },
+  "stepsJSON": {
+    "type": "stringType",
+    "value": "[{\"text\":\"Add the tamarind and tomatoes (cut into large pieces) into a mixer jar. Grind coarsely — not into a smooth paste or puree, just broken down roughly.\"},{\"text\":\"Place a strainer over a large bowl. Pour in the ground mixture and gradually add about 4 cups (1 liter) of water, squeezing or pressing with a hand or ladle, to extract all the juice and separate the peels, seeds, and pulp completely. Set the strained tomato juice aside.\"},{\"text\":\"Heat a dry pan on low heat. Add toor dal, coriander seeds, cumin, fenugreek, dried red chilies, and pepper. Dry roast slowly until just slightly warm and golden — do not let the color darken too much. Remove from heat and let cool completely.\"},{\"text\":\"Grind the cooled roasted ingredients into a smooth powder in a mixer. Add 5–6 garlic cloves and blend again coarsely. This is the rasam powder; set it aside.\"},{\"text\":\"Pour the strained tomato juice into a pot. Add turmeric, salt to taste, crushed fresh coriander, crushed curry leaves, slit green chilies, and all the prepared rasam powder. Mix well and adjust salt.\"},{\"text\":\"Place the pot on medium flame and simmer until the rasam reduces slightly, about 10–15 minutes.\",\"durationSec\":750},{\"text\":\"Make the tempering: heat 1 tablespoon of oil in a small pan. Add chana dal, urad dal, mustard seeds, cumin, and dried chilies; sauté briefly until they splutter. Add chopped garlic and curry leaves, sauté once, then turn off the heat.\"},{\"text\":\"Pour the tempering into the simmered rasam. Add finely chopped fresh coriander, mix well, and serve hot with plain steamed rice and papads.\"}]"
+  },
+  "isPublished": {
+    "type": "int64Type",
+    "value": 1
+  },
+  "schemaVersion": {
+    "type": "int64Type",
+    "value": 1
+  },
+  "difficulty": {
+    "type": "int64Type",
+    "value": 2
+  },
+  "totalMinutes": {
+    "type": "int64Type",
+    "value": 30
+  },
+  "servings": {
+    "type": "int64Type",
+    "value": 4
+  },
+  "nameTE": {
+    "type": "stringType",
+    "value": "టమాటో రసం"
+  },
+  "summary": {
+    "type": "stringType",
+    "value": "A tangy, spicy South Indian soup made with fresh tomatoes and tamarind, flavored with a freshly ground rasam powder that includes toor dal for body and thickness. Distinctive for its raw-extraction technique — tomatoes and tamarind are ground and strained cold, preserving fresh flavor without boiling."
+  },
+  "tags": {
+    "type": "stringListType",
+    "value": [
+      "vegetarian",
+      "vegan",
+      "spicy",
+      "quick"
+    ]
+  }
+}
