@@ -474,10 +474,10 @@ struct RecipeDetailView: View {
 
 #Preview("Palak Paneer") {
     NavigationStack { RecipeDetailView(recipe: .palakPaneer) }
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
 
 #Preview("Sparse (Pappu)") {
     NavigationStack { RecipeDetailView(recipe: .pappu) }
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }

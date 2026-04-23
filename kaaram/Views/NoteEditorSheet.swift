@@ -96,5 +96,5 @@ struct NoteEditorSheet: View {
 
 #Preview {
     NoteEditorSheet(slug: "palak-paneer")
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }

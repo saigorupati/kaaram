@@ -70,13 +70,13 @@ struct kaaramApp: App {
 
         let userDataConfig = ModelConfiguration(
             "UserData",
-            schema: Schema([FavoriteRecipe.self, RecipeNote.self]),
+            schema: Schema([FavoriteRecipe.self, RecipeNote.self, UserPreferences.self]),
             isStoredInMemoryOnly: false,
             cloudKitDatabase: .private("iCloud.com.saigorupati.kaaram")
         )
 
         if let container = try? ModelContainer(
-            for: CachedRecipe.self, FavoriteRecipe.self, RecipeNote.self,
+            for: CachedRecipe.self, FavoriteRecipe.self, RecipeNote.self, UserPreferences.self,
             configurations: localConfig, userDataConfig
         ) {
             return container
@@ -86,7 +86,7 @@ struct kaaramApp: App {
         let fallback = ModelConfiguration(isStoredInMemoryOnly: true)
         // swiftlint:disable:next force_try
         return try! ModelContainer(
-            for: CachedRecipe.self, FavoriteRecipe.self, RecipeNote.self,
+            for: CachedRecipe.self, FavoriteRecipe.self, RecipeNote.self, UserPreferences.self,
             configurations: fallback
         )
     }

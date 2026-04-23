@@ -312,10 +312,10 @@ struct HomeView: View {
 
 #Preview("Loaded") {
     HomeView(repository: MockRecipeRepository())
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
 
 #Preview("Empty") {
     HomeView(repository: MockRecipeRepository(recipes: []))
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }

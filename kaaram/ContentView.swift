@@ -60,10 +60,10 @@ struct ContentView: View {
 
 #Preview("Loaded") {
     ContentView(repository: MockRecipeRepository())
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
 
 #Preview("Empty") {
     ContentView(repository: MockRecipeRepository(recipes: []))
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }

@@ -279,10 +279,10 @@ struct BrowseView: View {
 
 #Preview("Loaded") {
     BrowseView(repository: MockRecipeRepository())
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
 
 #Preview("Empty") {
     BrowseView(repository: MockRecipeRepository(recipes: []))
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }

@@ -272,10 +272,10 @@ struct FavoritesView: View {
 
 #Preview("With favorites") {
     FavoritesView(repository: MockRecipeRepository())
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
 
 #Preview("Empty") {
     FavoritesView(repository: MockRecipeRepository())
-        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self, UserPreferences.self], inMemory: true)
 }
