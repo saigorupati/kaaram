@@ -2,10 +2,10 @@
 //  StepPageView.swift
 //  kaaram
 //
-//  One page of the cooking-mode TabView. Large serif instruction, a
-//  MonoCap label ("SEAR · 4 MINUTES") as an eyebrow above it, then the
-//  inline timer card when the step has a duration. Optimized for
-//  reading at arm's length.
+//  One page of the cooking-mode TabView. A MonoCap eyebrow, a large
+//  serif headline that shows the full step text (scrolls if long), and
+//  an inline timer card when the step has a duration. Optimized for
+//  reading at arm's length while cooking.
 //
 
 import SwiftUI
@@ -20,9 +20,9 @@ struct StepPageView: View {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 MonoCap(eyebrow, color: .kaaramSpice)
 
-                Text(instruction)
-                    .font(.system(size: 34, weight: .medium, design: .serif))
-                    .tracking(-1.0)
+                Text(step.text)
+                    .font(.system(size: bodyFontSize, weight: .medium, design: .serif))
+                    .tracking(-0.4)
                     .foregroundStyle(Color.kaaramInk)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
@@ -37,6 +37,7 @@ struct StepPageView: View {
             }
             .padding(.horizontal, 28)
             .padding(.top, Spacing.xl)
+            .padding(.bottom, Spacing.xxl)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -49,37 +50,50 @@ struct StepPageView: View {
         return "STEP \(number) OF \(total)"
     }
 
-    /// Show a short "title" (first sentence) if the step text is long,
-    /// otherwise show the full text. Keeps the giant type from
-    /// overflowing on small screens.
-    private var instruction: String {
-        let trimmed = step.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.count <= 120 { return trimmed }
-        if let dot = trimmed.firstIndex(of: ".") {
-            return String(trimmed[..<dot]) + "."
+    /// Scale the headline down as the step text gets longer so long,
+    /// detailed instructions don't require excessive scrolling but
+    /// short steps still feel like a magazine headline.
+    private var bodyFontSize: CGFloat {
+        let len = step.text.count
+        switch len {
+        case ..<80:       return 32
+        case 80..<160:    return 26
+        case 160..<280:   return 22
+        default:          return 19
         }
-        return trimmed
     }
 }
 
-#Preview("With timer") {
+#Preview("Short step") {
+    StepPageView(
+        number: 1,
+        total: 8,
+        step: .init(
+            text: "Soak 1 cup moong dal overnight. Drain in the morning.",
+            durationSec: nil
+        )
+    )
+    .background(Color.kaaramBackground)
+}
+
+#Preview("Medium step + timer") {
     StepPageView(
         number: 2,
-        total: 9,
+        total: 8,
         step: .init(
-            text: "Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly.",
+            text: "Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly, then add green chilies, onion, and tomato. Cover and cook on low for 5 minutes until soft.",
             durationSec: 300
         )
     )
     .background(Color.kaaramBackground)
 }
 
-#Preview("No timer") {
+#Preview("Long step (tomato rasam)") {
     StepPageView(
-        number: 3,
-        total: 9,
+        number: 2,
+        total: 8,
         step: .init(
-            text: "Blend the cooked onion-tomato mixture with the spinach into a smooth paste.",
+            text: "Place a strainer over a large bowl. Pour in the ground mixture and gradually add about 4 cups (1 liter) of water, squeezing or pressing with a hand or ladle, to extract all the juice and separate the peels, seeds, and pulp completely. Set the strained tomato juice aside.",
             durationSec: nil
         )
     )
