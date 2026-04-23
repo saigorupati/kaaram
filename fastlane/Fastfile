@@ -65,16 +65,22 @@ platform :ios do
     )
 
     upload_to_testflight(
-      api_key: api_key,
-      ipa:     "build/kaaram.ipa",
-      skip_waiting_for_build_processing: true,
-      # No changelog prompt — ship and move on.
-      changelog: "TestFlight build #{next_build}. Internal build."
+      api_key:                  api_key,
+      ipa:                      "build/kaaram.ipa",
+      # Wait for Apple to finish processing before assigning to the
+      # group, otherwise pilot can't distribute. Typical wait: 5–15 min.
+      skip_waiting_for_build_processing: false,
+      # Assign the build to our Internal Testing group. Testers get
+      # the TestFlight email automatically once processing completes.
+      groups:                   ["betatest"],
+      distribute_external:      false,
+      notify_external_testers:  false,
+      changelog:                "TestFlight build #{next_build}. Internal build."
     )
 
     # Stage the build-number bump so your next `git commit` has it.
     # (We don't auto-commit — your repo, your commit message.)
-    UI.success("Uploaded kaaram build #{next_build}. Bump committed? `git status` to check.")
+    UI.success("Uploaded kaaram build #{next_build} and assigned to 'betatest'. Bump committed? `git status` to check.")
   end
 
   desc "Quickly lint the Fastfile without building"
