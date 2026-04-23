@@ -9,7 +9,12 @@
 
 import Foundation
 
-struct RecentSearchesStore {
+/// Thread-agnostic: UserDefaults is thread-safe and the struct only
+/// holds value types, so opt out of the project's default MainActor
+/// isolation. Not declared Sendable because UserDefaults itself is
+/// not formally Sendable — callers must not share instances across
+/// actor boundaries.
+nonisolated struct RecentSearchesStore {
     private let defaults: UserDefaults
     private let key: String
     private let maxCount: Int

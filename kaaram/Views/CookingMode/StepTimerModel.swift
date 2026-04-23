@@ -62,8 +62,8 @@ final class StepTimerModel {
             while let self {
                 try? await Task.sleep(for: .seconds(1))
                 if Task.isCancelled { return }
-                await self.tick()
-                if await self.status != .running { return }
+                self.tick()
+                if self.status != .running { return }
             }
         }
     }
