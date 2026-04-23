@@ -1,0 +1,8 @@
+# App Store Connect identity for the Kaaram iOS app.
+# No secrets here — authentication is via the App Store Connect API
+# key declared in the Fastfile's `beta` lane.
+
+app_identifier("com.saigorupati.kaaram")
+apple_id("sainikit.gorupati@gmail.com")
+team_id("TUA96GSK9L")
+itc_team_id("TUA96GSK9L")

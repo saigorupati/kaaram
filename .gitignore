@@ -47,6 +47,16 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+fastlane/README.md
+fastlane/.env
+fastlane/.env.*
+!fastlane/.env.example
+fastlane/AuthKey_*.p8
+
+# Build output from `fastlane beta`
+build/
+*.ipa
+*.dSYM.zip
 
 # Playgrounds
 timeline.xctimeline
