@@ -2,9 +2,10 @@
 //  BilingualName.swift
 //  kaaram
 //
-//  Displays a recipe name in English, Telugu script, and romanized form.
-//  The romanized form is shown as a subtle subtitle only when it differs
-//  from the English name (e.g., "Pappu" == "Pappu", so skip it).
+//  Displays a recipe name as a serif editorial headline. Per the design
+//  system the primary display is English — Telugu is optionally shown
+//  beneath in a subtle serif subtitle as a cultural cue. Romanization
+//  is hidden when it matches the English name.
 //
 
 import SwiftUI
@@ -14,32 +15,35 @@ struct BilingualName: View {
     let telugu: String
     let romanized: String
     var alignment: HorizontalAlignment = .leading
+    var showTelugu: Bool = true
 
     var body: some View {
         VStack(alignment: alignment, spacing: Spacing.xs) {
             Text(english)
-                .font(.kaaramTitle)
-                .foregroundStyle(.primary)
+                .font(.kaaramDisplay)
+                .tracking(-0.8)
+                .foregroundStyle(Color.kaaramInk)
+                .lineLimit(2)
 
-            Text(telugu)
-                .font(.kaaramTelugu)
-                .foregroundStyle(.secondary)
-
-            if romanized.lowercased() != english.lowercased() {
+            if showTelugu && !telugu.isEmpty {
+                Text(telugu)
+                    .font(.kaaramTelugu)
+                    .foregroundStyle(Color.kaaramInkMuted)
+            } else if romanized.lowercased() != english.lowercased() && !romanized.isEmpty {
                 Text(romanized)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
                     .italic()
+                    .foregroundStyle(Color.kaaramInkMuted)
             }
         }
     }
 }
 
 #Preview {
-    VStack(spacing: Spacing.xl) {
-        BilingualName(english: "Pappu", telugu: "పప్పు", romanized: "pappu")
-        BilingualName(english: "Sour Tamarind Stew", telugu: "పులుసు", romanized: "pulusu")
-        BilingualName(english: "Gongura Pickle", telugu: "గోంగూర పచ్చడి", romanized: "gongura pachadi")
+    VStack(alignment: .leading, spacing: Spacing.xl) {
+        BilingualName(english: "Gongura Mamsam", telugu: "గోంగూర మాంసం", romanized: "gongura mamsam")
+        BilingualName(english: "Pulihora", telugu: "పులిహోర", romanized: "pulihora")
+        BilingualName(english: "Pappu", telugu: "పప్పు", romanized: "pappu", showTelugu: false)
     }
     .padding()
     .background(Color.kaaramBackground)

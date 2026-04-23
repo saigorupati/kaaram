@@ -2,15 +2,16 @@
 //  ContentView.swift
 //  kaaram
 //
-//  App root. Hosts the TabView and fans out the injected repository to
-//  the tabs that need it. Also runs a single @Query over FavoriteRecipe
-//  and projects the slug set into the environment so leaf views
-//  (RecipeCard, BrowseRow) can render heart badges without running
-//  their own queries.
+//  App root. Hosts the TabView with the four tabs from the design —
+//  Home, Explore, Saved, Profile — tinted to the chilli accent.
+//  Projects a single Set<String> of favorited slugs into the
+//  environment so leaf views can render bookmark badges without each
+//  running its own query.
 //
 
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     let repository: RecipeRepository
@@ -31,13 +32,29 @@ struct ContentView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
             BrowseView(repository: repository)
-                .tabItem { Label("Browse", systemImage: "magnifyingglass") }
+                .tabItem { Label("Explore", systemImage: "magnifyingglass") }
 
             FavoritesView(repository: repository)
-                .tabItem { Label("Favorites", systemImage: "heart.fill") }
+                .tabItem { Label("Saved", systemImage: "bookmark.fill") }
+
+            ProfileView()
+                .tabItem { Label("Profile", systemImage: "person.fill") }
         }
-        .tint(.kaaramSpice)
+        .tint(Color.kaaramSpice)
         .environment(\.favoriteSlugs, favoriteSlugs)
+        .background(Color.kaaramBackground.ignoresSafeArea())
+        .onAppear { Self.styleTabBar() }
+    }
+
+    /// Lift the tab bar off the cream canvas with a hairline + warm tint.
+    private static func styleTabBar() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.kaaramBackground)
+        appearance.shadowColor = UIColor(Color.kaaramHairline)
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 

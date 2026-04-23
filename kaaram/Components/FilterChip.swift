@@ -2,9 +2,10 @@
 //  FilterChip.swift
 //  kaaram
 //
-//  Selectable pill used for filter rows (region, category, tags).
-//  Different visual language from the meta Chip: border when
-//  unselected, solid accent fill when selected. Haptic on toggle.
+//  Selectable pill used for horizontal filter rows. When selected, fills
+//  with the deep ink color and flips text to cream; when unselected,
+//  sits transparent behind a hairline border. Matches `KChip` in the
+//  Claude Design mockups. Selection haptic on toggle.
 //
 
 import SwiftUI
@@ -23,19 +24,20 @@ struct FilterChip: View {
             action()
         } label: {
             Text(title)
-                .font(.caption.weight(.medium))
+                .font(.system(size: 13, weight: .medium))
+                .tracking(-0.1)
                 .lineLimit(1)
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .padding(.horizontal, Spacing.m)
-                .padding(.vertical, Spacing.s)
+                .foregroundStyle(isSelected ? Color.kaaramBackground : Color.kaaramInkSoft)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 7)
                 .background(
-                    isSelected ? Color.kaaramSpice : Color.kaaramSurface,
+                    isSelected ? Color.kaaramInk : Color.clear,
                     in: Capsule()
                 )
                 .overlay(
                     Capsule()
                         .stroke(
-                            isSelected ? Color.clear : Color.secondary.opacity(0.25),
+                            isSelected ? Color.clear : Color.kaaramHairline,
                             lineWidth: 1
                         )
                 )
@@ -45,13 +47,12 @@ struct FilterChip: View {
 }
 
 #Preview {
-    VStack(alignment: .leading, spacing: Spacing.m) {
-        HStack(spacing: Spacing.xs) {
-            FilterChip(title: "All",        isSelected: true)  {}
-            FilterChip(title: "Andhra",     isSelected: false) {}
-            FilterChip(title: "Telangana",  isSelected: false) {}
-            FilterChip(title: "S. Indian",  isSelected: false) {}
-        }
+    HStack(spacing: Spacing.xs) {
+        FilterChip(title: "All",       isSelected: true)  {}
+        FilterChip(title: "Veg",       isSelected: false) {}
+        FilterChip(title: "30 min",    isSelected: false) {}
+        FilterChip(title: "Telangana", isSelected: false) {}
+        FilterChip(title: "Festive",   isSelected: false) {}
     }
     .padding()
     .background(Color.kaaramBackground)

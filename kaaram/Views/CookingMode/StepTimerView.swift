@@ -2,9 +2,10 @@
 //  StepTimerView.swift
 //  kaaram
 //
-//  Countdown timer for a step. Big ring + monospaced time + three
-//  controls (reset / primary / placeholder-for-symmetry). Success
-//  haptic is fired by StepTimerModel when the countdown hits zero.
+//  Inline countdown timer for a step. Matches the cooking-mode mockup:
+//  a circular chip on the left showing the time remaining in serif,
+//  a title + subtitle in the middle ("Timer ready · Tap to start"),
+//  and a large play/pause accent button on the right.
 //
 
 import SwiftUI
@@ -17,123 +18,90 @@ struct StepTimerView: View {
     }
 
     var body: some View {
-        VStack(spacing: Spacing.xl) {
-            ring
-            controls
-        }
-        .animation(.snappy, value: model.status)
-    }
-
-    // MARK: - Ring
-
-    private var ring: some View {
-        ZStack {
-            // Track
-            Circle()
-                .stroke(Color.kaaramSpice.opacity(0.15), lineWidth: 12)
-
-            // Progress arc
-            Circle()
-                .trim(from: 0, to: model.progress)
-                .stroke(
-                    Color.kaaramSpice,
-                    style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 1), value: model.remainingSeconds)
-
-            // Time readout
-            VStack(spacing: Spacing.xs) {
+        HStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .stroke(Color.kaaramSpice, lineWidth: 3)
+                    .frame(width: 72, height: 72)
                 Text(Self.format(seconds: model.remainingSeconds))
-                    .font(.system(.largeTitle, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
+                    .font(.system(size: 20, weight: .medium, design: .serif))
+                    .tracking(-0.5)
+                    .foregroundStyle(Color.kaaramInk)
                     .contentTransition(.numericText(countsDown: true))
-
-                statusLabel
             }
-        }
-        .frame(width: 200, height: 200)
-    }
 
-    @ViewBuilder
-    private var statusLabel: some View {
-        switch model.status {
-        case .idle:
-            Text("Ready")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        case .running:
-            Text("Running")
-                .font(.caption)
-                .foregroundStyle(Color.kaaramSpice)
-        case .paused:
-            Text("Paused")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        case .finished:
-            Text("Done")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Color.kaaramSpice)
-        }
-    }
-
-    // MARK: - Controls
-
-    private var controls: some View {
-        HStack(spacing: Spacing.xl) {
-            // Reset (left)
-            Button {
-                model.reset()
-            } label: {
-                Image(systemName: "arrow.counterclockwise")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 56, height: 56)
-                    .background(Color.kaaramSurface, in: Circle())
-                    .overlay(
-                        Circle().stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .medium, design: .serif))
+                    .tracking(-0.2)
+                    .foregroundStyle(Color.kaaramInk)
+                Text(subtitle)
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Color.kaaramInkMuted)
             }
-            .accessibilityLabel("Reset timer")
-            .disabled(model.status == .idle)
-            .opacity(model.status == .idle ? 0.35 : 1)
 
-            // Primary (center)
+            Spacer(minLength: 0)
+
             Button {
                 model.toggle()
             } label: {
                 Image(systemName: primaryIcon)
-                    .font(.title.weight(.bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 72, height: 72)
+                    .frame(width: 52, height: 52)
                     .background(Color.kaaramSpice, in: Circle())
-                    .shadow(color: Color.kaaramSpice.opacity(0.35), radius: 8, y: 4)
+                    .shadow(color: Color.kaaramSpice.opacity(0.25), radius: 6, y: 3)
             }
             .accessibilityLabel(primaryAccessibilityLabel)
+        }
+        .padding(20)
+        .background(Color.kaaramSurface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.kaaramHairline2, lineWidth: 1)
+        )
+        .contextMenu {
+            Button(role: .destructive) { model.reset() } label: {
+                Label("Reset timer", systemImage: "arrow.counterclockwise")
+            }
+        }
+        .animation(.snappy, value: model.status)
+    }
 
-            // Symmetry placeholder
-            Color.clear.frame(width: 56, height: 56)
+    private var title: String {
+        switch model.status {
+        case .idle:     return "Timer ready"
+        case .running:  return "Running"
+        case .paused:   return "Paused"
+        case .finished: return "Done"
+        }
+    }
+
+    private var subtitle: String {
+        switch model.status {
+        case .idle:     return "Tap to start · Vibrates when done"
+        case .running:  return "Long-press to reset"
+        case .paused:   return "Tap to resume"
+        case .finished: return "Tap to restart"
         }
     }
 
     private var primaryIcon: String {
         switch model.status {
-        case .idle, .paused: "play.fill"
-        case .running:       "pause.fill"
-        case .finished:      "arrow.counterclockwise"
+        case .idle, .paused: return "play.fill"
+        case .running:       return "pause.fill"
+        case .finished:      return "arrow.counterclockwise"
         }
     }
 
     private var primaryAccessibilityLabel: String {
         switch model.status {
-        case .idle:     "Start timer"
-        case .running:  "Pause timer"
-        case .paused:   "Resume timer"
-        case .finished: "Restart timer"
+        case .idle:     return "Start timer"
+        case .running:  return "Pause timer"
+        case .paused:   return "Resume timer"
+        case .finished: return "Restart timer"
         }
     }
-
-    // MARK: - Formatting
 
     private static func format(seconds: Int) -> String {
         let m = seconds / 60
@@ -142,14 +110,14 @@ struct StepTimerView: View {
     }
 }
 
-#Preview("Running (60s)") {
+#Preview("60 seconds") {
     StepTimerView(totalSeconds: 60)
         .padding()
         .background(Color.kaaramBackground)
 }
 
-#Preview("Long (7m)") {
-    StepTimerView(totalSeconds: 420)
+#Preview("4 minutes") {
+    StepTimerView(totalSeconds: 240)
         .padding()
         .background(Color.kaaramBackground)
 }

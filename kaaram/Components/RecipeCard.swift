@@ -2,17 +2,21 @@
 //  RecipeCard.swift
 //  kaaram
 //
-//  Card view for a recipe. Shows a hero image via AsyncImage when the
-//  recipe has one, otherwise a colorful category-based gradient with
-//  an SF Symbol. Meta chips for region and cook time. Top-right corner
-//  displays a heart badge when the recipe is in the user's favorites
-//  (read from @Environment(\.favoriteSlugs)).
+//  Editorial recipe card — striped placeholder or hero image at top,
+//  serif recipe name with a sub-label ("Tamarind rice · 30 min"), and
+//  a favorite heart badge pinned to the top-right when the recipe is
+//  saved. Matches the cards used in Home's "Browse by dish" grid and
+//  the horizontal "Weeknight tiffins" carousel.
 //
 
 import SwiftUI
 
 struct RecipeCard: View {
     let recipe: Recipe
+
+    /// Override the default hero height (defaults to 140 — the grid size).
+    var heroHeight: CGFloat = 140
+    var flourish: Bool = true
 
     @Environment(\.favoriteSlugs) private var favoriteSlugs
 
@@ -21,34 +25,32 @@ struct RecipeCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             hero
+                .frame(height: heroHeight)
 
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(recipe.nameEN)
                     .font(.kaaramHeadline)
+                    .tracking(-0.2)
+                    .foregroundStyle(Color.kaaramInk)
                     .lineLimit(1)
-                if !recipe.nameTE.isEmpty {
-                    Text(recipe.nameTE)
-                        .font(.kaaramTelugu)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
 
-            HStack(spacing: Spacing.xs) {
-                Chip(text: recipe.region.shortName, style: .curry, size: .compact)
-                if recipe.totalMinutes > 0 {
-                    Chip(text: "\(recipe.totalMinutes) min", style: .turmeric, size: .compact)
-                }
+                Text(subLabel)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Color.kaaramInkMuted)
+                    .lineLimit(1)
             }
         }
-        .padding(Spacing.m)
+        .padding(10)
         .background(
             Color.kaaramSurface,
-            in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
         )
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.kaaramHairline2, lineWidth: 1)
+        )
     }
 
     // MARK: - Hero
@@ -57,13 +59,13 @@ struct RecipeCard: View {
     private var hero: some View {
         ZStack(alignment: .topTrailing) {
             heroImage
-
             if isFavorited {
                 heartBadge
-                    .padding(Spacing.s)
+                    .padding(6)
                     .transition(.scale.combined(with: .opacity))
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .animation(.snappy, value: isFavorited)
     }
 
@@ -73,79 +75,51 @@ struct RecipeCard: View {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    placeholderGradient
-                case .empty:
-                    placeholderGradient
-                        .overlay(ProgressView().tint(.white))
-                @unknown default:
-                    placeholderGradient
+                    image.resizable().aspectRatio(contentMode: .fill)
+                default:
+                    FoodPlaceholder(label: recipe.nameEN, flourish: flourish, cornerRadius: 10)
                 }
             }
-            .frame(height: 140)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.l, style: .continuous))
         } else {
-            placeholderGradient
-                .frame(height: 140)
+            FoodPlaceholder(label: recipe.nameEN, flourish: flourish, cornerRadius: 10)
         }
-    }
-
-    private var placeholderGradient: some View {
-        RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [.kaaramSpice.opacity(0.45), .kaaramTurmeric.opacity(0.55)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay {
-                Image(systemName: Self.symbol(for: recipe.category))
-                    .font(.system(size: 48, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
     }
 
     private var heartBadge: some View {
         Image(systemName: "heart.fill")
-            .font(.caption.weight(.bold))
+            .font(.system(size: 10, weight: .bold))
             .foregroundStyle(.white)
-            .padding(6)
+            .padding(5)
             .background(Color.kaaramSpice, in: Circle())
-            .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+            .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
             .accessibilityLabel("Favorited")
     }
 
-    /// Maps a category to an SF Symbol for the no-image fallback.
-    private static func symbol(for category: Recipe.Category) -> String {
-        switch category {
-        case .breakfast: "sunrise.fill"
-        case .curry:     "bowl.fill"
-        case .pickle:    "leaf.fill"
-        case .sweet:     "birthday.cake.fill"
-        case .festive:   "sparkles"
-        case .tiffin:    "cup.and.saucer.fill"
-        case .rice:      "circle.grid.2x2.fill"
-        case .chutney:   "drop.fill"
-        case .snack:     "takeoutbag.and.cup.and.straw.fill"
-        case .other:     "fork.knife"
+    private var subLabel: String {
+        var parts: [String] = [recipe.category.displayName]
+        if recipe.totalMinutes > 0 {
+            parts.append("\(recipe.totalMinutes) min")
         }
+        return parts.joined(separator: " · ")
     }
 }
 
 #Preview("Grid") {
     ScrollView {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.m) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             ForEach(Recipe.previewSet) { recipe in
-                RecipeCard(recipe: recipe)
+                RecipeCard(recipe: recipe, heroHeight: 68, flourish: false)
             }
         }
         .padding()
     }
     .background(Color.kaaramBackground)
-    // Simulate two recipes being favorited.
     .environment(\.favoriteSlugs, ["palak-paneer", "pulihora"])
+}
+
+#Preview("Carousel card") {
+    RecipeCard(recipe: .palakPaneer, heroHeight: 140)
+        .frame(width: 168)
+        .padding()
+        .background(Color.kaaramBackground)
 }

@@ -2,9 +2,9 @@
 //  CompletionView.swift
 //  kaaram
 //
-//  Final page of cooking mode. Celebrates the cook and offers a Done
-//  button that dismisses back to the recipe detail screen. Plays a
-//  success haptic once when it appears.
+//  Final page of cooking mode. Soft celebration: a circled check mark
+//  inside the chilli wash, serif "You did it!" headline, mono sub-label,
+//  and a Done button. Plays a success haptic once when it appears.
 //
 
 import SwiftUI
@@ -21,22 +21,25 @@ struct CompletionView: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.kaaramSpice.opacity(0.15))
+                    .fill(Color.kaaramSpiceWash)
                     .frame(width: 160, height: 160)
-
+                Circle()
+                    .stroke(Color.kaaramSpice.opacity(0.25), lineWidth: 1)
+                    .frame(width: 180, height: 180)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 72, weight: .bold))
+                    .font(.system(size: 56, weight: .bold))
                     .foregroundStyle(Color.kaaramSpice)
             }
 
             VStack(spacing: Spacing.s) {
+                MonoCap("DONE · ENJOY", color: .kaaramSpice)
                 Text("You did it!")
-                    .font(.kaaramDisplay)
-                    .foregroundStyle(Color.kaaramSpice)
-
-                Text("Enjoy your meal.")
-                    .font(.kaaramBody)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 40, weight: .medium, design: .serif))
+                    .tracking(-1.0)
+                    .foregroundStyle(Color.kaaramInk)
+                Text("Serve hot. Share generously.")
+                    .font(.system(size: 14.5))
+                    .foregroundStyle(Color.kaaramInkSoft)
             }
 
             Spacer()
@@ -45,14 +48,11 @@ struct CompletionView: View {
                 onDismiss()
             } label: {
                 Text("Done")
-                    .font(.kaaramHeadline)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        Color.kaaramSpice,
-                        in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-                    )
+                    .frame(height: 54)
+                    .background(Color.kaaramSpice, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.bottom, Spacing.xl)

@@ -2,14 +2,13 @@
 //  Chip.swift
 //  kaaram
 //
-//  Small pill-shaped label with optional icon. Used for meta info
-//  (time, difficulty, region) and filters.
+//  Small pill label for meta info (time, region, difficulty). Two styles:
+//  - `.ink` — solid ink fill with cream text. Used as the "active" state
+//    on filter chips and primary CTAs at the chip level.
+//  - `.outline` — transparent with a hairline border. The default resting
+//    state. Text color is `kaaramInkSoft`.
 //
-//  Two sizes:
-//  - `.regular` (default): icon + text, generous padding. Used in
-//    the Recipe Detail meta row.
-//  - `.compact`: tighter padding, smaller caption text. Used on
-//    Recipe cards in the Home grid where horizontal space is ~160pt.
+//  Two sizes (regular / compact). Optional system-image icon.
 //
 
 import SwiftUI
@@ -17,27 +16,36 @@ import SwiftUI
 struct Chip: View {
     let text: String
     var systemImage: String? = nil
-    var style: ChipStyle = .neutral
+    var style: ChipStyle = .outline
     var size: ChipSize = .regular
 
     enum ChipStyle {
-        case neutral, spice, turmeric, curry
+        case outline, ink, spice, curry, turmeric
 
         var background: Color {
             switch self {
-            case .neutral:  return .kaaramSurface
-            case .spice:    return .kaaramSpice.opacity(0.15)
+            case .outline:  return .clear
+            case .ink:      return .kaaramInk
+            case .spice:    return .kaaramSpiceWash
+            case .curry:    return .kaaramCurry.opacity(0.14)
             case .turmeric: return .kaaramTurmeric.opacity(0.18)
-            case .curry:    return .kaaramCurry.opacity(0.15)
             }
         }
 
         var foreground: Color {
             switch self {
-            case .neutral:  return .primary
+            case .outline:  return .kaaramInkSoft
+            case .ink:      return .kaaramBackground
             case .spice:    return .kaaramSpice
-            case .turmeric: return .kaaramTurmeric
             case .curry:    return .kaaramCurry
+            case .turmeric: return .kaaramTurmeric
+            }
+        }
+
+        var hasBorder: Bool {
+            switch self {
+            case .outline:  return true
+            default:        return false
             }
         }
     }
@@ -47,68 +55,62 @@ struct Chip: View {
 
         var font: Font {
             switch self {
-            case .regular: .kaaramCallout
-            case .compact: .caption.weight(.medium)
+            case .regular: .system(size: 13, weight: .medium)
+            case .compact: .system(size: 11.5, weight: .medium)
             }
         }
 
         var horizontalPadding: CGFloat {
             switch self {
-            case .regular: Spacing.m
-            case .compact: Spacing.s
+            case .regular: 13
+            case .compact: 9
             }
         }
 
         var verticalPadding: CGFloat {
             switch self {
-            case .regular: Spacing.s
+            case .regular: 7
             case .compact: 4
-            }
-        }
-
-        var iconSpacing: CGFloat {
-            switch self {
-            case .regular: Spacing.xs
-            case .compact: 3
             }
         }
     }
 
     var body: some View {
-        HStack(spacing: size.iconSpacing) {
+        HStack(spacing: 5) {
             if let systemImage {
                 Image(systemName: systemImage)
+                    .font(.system(size: size == .regular ? 11 : 10, weight: .medium))
             }
             Text(text)
                 .lineLimit(1)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .font(size.font)
+        .tracking(-0.1)
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
-        .background(style.background, in: Capsule())
         .foregroundStyle(style.foreground)
+        .background(style.background, in: Capsule())
+        .overlay(
+            Capsule().stroke(
+                style.hasBorder ? Color.kaaramHairline : Color.clear,
+                lineWidth: 1
+            )
+        )
     }
 }
 
 #Preview {
     VStack(alignment: .leading, spacing: Spacing.l) {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Regular").font(.caption).foregroundStyle(.secondary)
-            HStack(spacing: Spacing.s) {
-                Chip(text: "Andhra", systemImage: "map", style: .curry)
-                Chip(text: "25 min", systemImage: "clock", style: .turmeric)
-                Chip(text: "Spicy", systemImage: "flame", style: .spice)
-            }
+        HStack(spacing: Spacing.s) {
+            Chip(text: "All", style: .ink)
+            Chip(text: "Veg")
+            Chip(text: "30 min")
+            Chip(text: "Telangana")
         }
-
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Compact").font(.caption).foregroundStyle(.secondary)
-            HStack(spacing: Spacing.s) {
-                Chip(text: "N. Indian", style: .curry, size: .compact)
-                Chip(text: "40 min", style: .turmeric, size: .compact)
-                Chip(text: "S. Indian", style: .curry, size: .compact)
-            }
+        HStack(spacing: Spacing.s) {
+            Chip(text: "Telangana",  systemImage: "map",   style: .curry)
+            Chip(text: "25 min",  systemImage: "clock", style: .turmeric)
+            Chip(text: "Spicy",   systemImage: "flame", style: .spice)
         }
     }
     .padding()

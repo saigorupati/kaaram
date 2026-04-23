@@ -2,12 +2,13 @@
 //  RecipeDetailView.swift
 //  kaaram
 //
-//  Full recipe detail: hero image, bilingual name, meta chips, actions,
-//  sectioned ingredients list, and numbered steps with timer badges.
-//
-//  Favorite state is persisted via SwiftData (FavoriteRecipe model),
-//  synced to the user's CloudKit private database.
-//  Start Cooking opens the full-screen step-by-step cooking mode.
+//  Editorial recipe detail. A full-bleed hero pulls up under a rounded
+//  content card. MonoCap region/category eyebrow, serif title, then a
+//  four-up PREP / COOK / SERVES / HEAT grid sits between two hairlines.
+//  Ingredients render with spice-dot avatars; steps are numbered and
+//  reveal an inline timer badge when present. A sticky "Start cooking"
+//  CTA lives at the bottom. Favorite is a bookmark in the top-right
+//  glass chip, not a separate action row.
 //
 
 import SwiftData
@@ -17,89 +18,44 @@ struct RecipeDetailView: View {
     let recipe: Recipe
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
 
-    /// Live query for this recipe's favorite row. Either empty or size 1.
     @Query private var matchingFavorites: [FavoriteRecipe]
-
-    /// Live query for this recipe's note. Either empty or size 1.
     @Query private var matchingNotes: [RecipeNote]
 
-    // Full-screen cooking mode presentation.
-    @State private var isCookingModeActive: Bool = false
+    @State private var isCookingModeActive = false
+    @State private var isNotesEditorPresented = false
 
-    // Notes editor sheet.
-    @State private var isNotesEditorPresented: Bool = false
-
-    // Haptic generators for the favorite toggle.
     private let haptic = UIImpactFeedbackGenerator(style: .soft)
 
     init(recipe: Recipe) {
         self.recipe = recipe
         let slug = recipe.slug
-        _matchingFavorites = Query(
-            filter: #Predicate<FavoriteRecipe> { $0.slug == slug }
-        )
-        _matchingNotes = Query(
-            filter: #Predicate<RecipeNote> { $0.slug == slug }
-        )
+        _matchingFavorites = Query(filter: #Predicate<FavoriteRecipe> { $0.slug == slug })
+        _matchingNotes = Query(filter: #Predicate<RecipeNote> { $0.slug == slug })
     }
 
+    private var isFavorited: Bool { !matchingFavorites.isEmpty }
     private var userNote: RecipeNote? { matchingNotes.first }
 
-    private var isFavorited: Bool {
-        !matchingFavorites.isEmpty
-    }
-
-    private func toggleFavorite() {
-        haptic.impactOccurred()
-        if let existing = matchingFavorites.first {
-            modelContext.delete(existing)
-        } else {
-            modelContext.insert(FavoriteRecipe(slug: recipe.slug))
-        }
-        // SwiftData autosaves, but an explicit save lets CloudKit
-        // sync fire sooner on device.
-        try? modelContext.save()
-    }
+    // MARK: - Body
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
-                hero
-                    .padding(.horizontal, Spacing.l)
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    hero
+                    pulledCard
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+            .background(Color.kaaramBackground)
 
-                VStack(alignment: .leading, spacing: Spacing.xl) {
-                    namesSection
-                    metaSection
-                    if !recipe.summary.isEmpty {
-                        Text(recipe.summary)
-                            .font(.kaaramBody)
-                            .foregroundStyle(.secondary)
-                    }
-                    tagsSection
-                    actionRow
-                    notesSection
-                    ingredientsSection
-                    stepsSection
-                }
-                .padding(.horizontal, Spacing.l)
-                .padding(.bottom, Spacing.xxl)
-            }
-            .padding(.top, Spacing.m)
+            stickyCTA
         }
-        .background(Color.kaaramBackground)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(recipe.nameEN)
-                    .font(.kaaramCallout)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: shareText) {
-                    Image(systemName: "square.and.arrow.up")
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
+        .overlay(alignment: .top) { floatingHeader }
         .fullScreenCover(isPresented: $isCookingModeActive) {
             CookingModeView(recipe: recipe)
         }
@@ -110,92 +66,185 @@ struct RecipeDetailView: View {
 
     // MARK: - Hero
 
-    @ViewBuilder
     private var hero: some View {
-        if let url = recipe.heroImageURL {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().aspectRatio(contentMode: .fill)
-                case .failure, .empty:
-                    placeholderGradient
-                @unknown default:
-                    placeholderGradient
+        Group {
+            if let url = recipe.heroImageURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    default:
+                        FoodPlaceholder(label: recipe.nameEN, note: "overhead", cornerRadius: 0)
+                    }
+                }
+            } else {
+                FoodPlaceholder(label: recipe.nameEN, note: "overhead", cornerRadius: 0)
+            }
+        }
+        .frame(height: 380)
+        .clipped()
+    }
+
+    // MARK: - Floating nav row
+
+    private var floatingHeader: some View {
+        HStack {
+            glassButton(systemImage: "chevron.left", accessibility: "Back") {
+                dismiss()
+            }
+            Spacer()
+            glassButton(
+                systemImage: isFavorited ? "bookmark.fill" : "bookmark",
+                tint: isFavorited ? .kaaramSpice : .kaaramInk,
+                accessibility: isFavorited ? "Remove from saved" : "Save"
+            ) {
+                toggleFavorite()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 56)
+    }
+
+    private func glassButton(
+        systemImage: String,
+        tint: Color = .kaaramInk,
+        accessibility: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 38, height: 38)
+                .background(
+                    Circle()
+                        .fill(Color.kaaramSurface.opacity(0.82))
+                )
+                .overlay(
+                    Circle().stroke(Color.black.opacity(0.08), lineWidth: 1)
+                )
+        }
+        .accessibilityLabel(accessibility)
+    }
+
+    // MARK: - Pulled-up content card
+
+    private var pulledCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                MonoCap(eyebrow, color: .kaaramSpice)
+                    .padding(.top, Spacing.xl)
+
+                Text(recipe.nameEN)
+                    .font(.system(size: 32, weight: .medium, design: .serif))
+                    .tracking(-0.9)
+                    .foregroundStyle(Color.kaaramInk)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !recipe.summary.isEmpty {
+                    Text(recipe.summary)
+                        .font(.system(size: 14.5))
+                        .foregroundStyle(Color.kaaramInkSoft)
+                        .lineSpacing(3)
+                }
+
+                metaGrid
+
+                if !recipe.tags.isEmpty {
+                    tagsScroll
+                }
+
+                notesSection
+
+                if !recipe.ingredients.isEmpty {
+                    ingredientsSection
+                }
+
+                if !recipe.steps.isEmpty {
+                    stepsSection
                 }
             }
-            .frame(height: 260)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
-        } else {
-            placeholderGradient
-                .frame(height: 260)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 120)
         }
-    }
-
-    private var placeholderGradient: some View {
-        RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [.kaaramSpice.opacity(0.5), .kaaramTurmeric.opacity(0.65)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            UnevenRoundedRectangle(
+                cornerRadii: .init(
+                    topLeading: 28,
+                    bottomLeading: 0,
+                    bottomTrailing: 0,
+                    topTrailing: 28
                 )
             )
-            .overlay {
-                Image(systemName: Self.symbol(for: recipe.category))
-                    .font(.system(size: 96, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-            }
-    }
-
-    // MARK: - Name & meta
-
-    private var namesSection: some View {
-        BilingualName(
-            english:  recipe.nameEN,
-            telugu:   recipe.nameTE,
-            romanized: recipe.nameRomanized
+            .fill(Color.kaaramBackground)
         )
+        .offset(y: -28)
     }
 
-    private var metaSection: some View {
-        HStack(spacing: Spacing.s) {
-            Chip(
-                text: recipe.region.displayName,
-                systemImage: "map",
-                style: .curry
-            )
-            if recipe.totalMinutes > 0 {
-                Chip(
-                    text: "\(recipe.totalMinutes) min",
-                    systemImage: "clock",
-                    style: .turmeric
-                )
-            }
-            if recipe.difficulty > 0 {
-                Chip(
-                    text: Self.difficultyLabel(recipe.difficulty),
-                    systemImage: "flame",
-                    style: .spice
-                )
-            }
-            if recipe.servings > 0 {
-                Chip(
-                    text: "Serves \(recipe.servings)",
-                    systemImage: "person.2",
-                    style: .neutral
-                )
-            }
+    private var eyebrow: String {
+        "\(recipe.region.displayName) · \(recipe.category.displayName)"
+    }
+
+    // MARK: - Meta grid
+
+    private var metaGrid: some View {
+        HStack(spacing: 0) {
+            metaCell(label: "PREP", value: prepLabel)
+            metaCell(label: "COOK", value: cookLabel)
+            metaCell(label: "SERVES", value: recipe.servings > 0 ? "\(recipe.servings)" : "—")
+            metaCell(label: "HEAT", value: heatLabel)
+        }
+        .padding(.vertical, 16)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Color.kaaramHairline2).frame(height: 1)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.kaaramHairline2).frame(height: 1)
         }
     }
 
-    @ViewBuilder
-    private var tagsSection: some View {
-        if !recipe.tags.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.s) {
-                    ForEach(recipe.tags, id: \.self) { tag in
-                        Chip(text: tag.capitalized, style: .neutral)
-                    }
+    private func metaCell(label: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            MonoCap(label)
+            Text(value)
+                .font(.system(size: 16, weight: .medium, design: .serif))
+                .foregroundStyle(Color.kaaramInk)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var prepLabel: String {
+        let prep = max(0, recipe.totalMinutes / 3)
+        return prep > 0 ? "\(prep) min" : "—"
+    }
+
+    private var cookLabel: String {
+        let cook = recipe.totalMinutes - max(0, recipe.totalMinutes / 3)
+        if cook <= 0 { return "—" }
+        if cook >= 60 {
+            let h = cook / 60
+            let m = cook % 60
+            return m == 0 ? "\(h)h" : "\(h)h \(m)m"
+        }
+        return "\(cook) min"
+    }
+
+    private var heatLabel: String {
+        // recipe.difficulty is 1–3 in the model; map to 4-dot visual.
+        let level = min(4, max(0, recipe.difficulty + 1))
+        let filled = String(repeating: "●", count: level)
+        let empty = String(repeating: "○", count: max(0, 4 - level))
+        return filled + empty
+    }
+
+    // MARK: - Tags
+
+    private var tagsScroll: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(recipe.tags, id: \.self) { tag in
+                    Chip(text: tag.capitalized)
                 }
             }
         }
@@ -204,7 +253,7 @@ struct RecipeDetailView: View {
     // MARK: - Notes
 
     private var notesSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             SectionHeader(title: "Your notes")
 
             Button {
@@ -219,164 +268,195 @@ struct RecipeDetailView: View {
     private var noteCard: some View {
         let body = userNote?.body ?? ""
         let hasNote = !body.isEmpty
-
         return HStack(alignment: .top, spacing: Spacing.m) {
             if hasNote {
                 Text(body)
                     .font(.kaaramBody)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.kaaramInk)
                     .multilineTextAlignment(.leading)
             } else {
                 Text("Tap to add your own notes, tweaks, or memories.")
                     .font(.kaaramCallout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.kaaramInkMuted)
                     .multilineTextAlignment(.leading)
             }
 
             Spacer(minLength: Spacing.s)
 
-            Image(systemName: hasNote ? "pencil" : "plus.circle.fill")
-                .font(.title3)
+            Image(systemName: hasNote ? "pencil" : "plus")
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color.kaaramSpice)
         }
         .padding(Spacing.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.kaaramSurface,
-            in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
+        .background(Color.kaaramSurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.kaaramHairline2, lineWidth: 1)
         )
-    }
-
-    // MARK: - Action row
-
-    private var actionRow: some View {
-        HStack(spacing: Spacing.m) {
-            Button {
-                toggleFavorite()
-            } label: {
-                Image(systemName: isFavorited ? "heart.fill" : "heart")
-                    .font(.title3)
-                    .foregroundStyle(isFavorited ? Color.kaaramSpice : .secondary)
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 56, height: 56)
-                    .background(
-                        Color.kaaramSurface,
-                        in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-                            .stroke(Color.kaaramSpice.opacity(isFavorited ? 0.5 : 0), lineWidth: 1)
-                    )
-            }
-            .animation(.snappy, value: isFavorited)
-            .accessibilityLabel(isFavorited ? "Remove from favorites" : "Add to favorites")
-
-            Button {
-                isCookingModeActive = true
-            } label: {
-                HStack(spacing: Spacing.s) {
-                    Image(systemName: "play.fill")
-                    Text("Start Cooking")
-                }
-                .font(.kaaramHeadline)
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    recipe.steps.isEmpty
-                        ? Color.kaaramSpice.opacity(0.4)
-                        : Color.kaaramSpice,
-                    in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-                )
-            }
-            .disabled(recipe.steps.isEmpty)
-            .accessibilityLabel(
-                recipe.steps.isEmpty
-                    ? "Start Cooking (no steps available)"
-                    : "Start Cooking"
-            )
-        }
     }
 
     // MARK: - Ingredients
 
-    @ViewBuilder
     private var ingredientsSection: some View {
-        if !recipe.ingredients.isEmpty {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                SectionHeader(title: "Ingredients")
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            SectionHeader(
+                title: "Ingredients",
+                trailing: recipe.servings > 0 ? "\(recipe.servings) SERVINGS" : nil
+            )
 
-                let groups = Self.groupedIngredients(recipe.ingredients)
-                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        if let section = group.section {
-                            Text(section)
-                                .font(.kaaramCallout)
-                                .foregroundStyle(Color.kaaramSpice)
-                                .padding(.top, Spacing.s)
-                        }
-                        ForEach(Array(group.items.enumerated()), id: \.offset) { _, ingredient in
-                            IngredientRow(ingredient: ingredient)
-                        }
+            let groups = Self.grouped(recipe.ingredients)
+            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                VStack(alignment: .leading, spacing: 0) {
+                    if let section = group.section {
+                        MonoCap(section, color: .kaaramSpice)
+                            .padding(.top, Spacing.s)
+                            .padding(.bottom, 4)
+                    }
+                    ForEach(Array(group.items.enumerated()), id: \.offset) { _, ing in
+                        ingredientRow(ing)
                     }
                 }
             }
         }
     }
 
-    // MARK: - Steps
-
-    @ViewBuilder
-    private var stepsSection: some View {
-        if !recipe.steps.isEmpty {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                SectionHeader(title: "Steps")
-
-                VStack(alignment: .leading, spacing: Spacing.l) {
-                    ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
-                        StepRow(number: index + 1, step: step)
-                    }
+    private func ingredientRow(_ ing: Recipe.Ingredient) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            SpiceDot(label: ing.item, size: 28)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(ing.item)
+                    .font(.system(size: 14.5))
+                    .foregroundStyle(Color.kaaramInk)
+                if let notes = ing.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Color.kaaramInkMuted)
                 }
             }
+            Spacer(minLength: 0)
+            Text(quantityText(ing))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .tracking(0.4)
+                .foregroundStyle(Color.kaaramInkMuted)
+        }
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.kaaramHairline2).frame(height: 1)
+        }
+    }
+
+    private func quantityText(_ ing: Recipe.Ingredient) -> String {
+        let qty = ing.qty?.trimmingCharacters(in: .whitespaces) ?? ""
+        let unit = ing.unit?.trimmingCharacters(in: .whitespaces) ?? ""
+        if qty.isEmpty && unit.isEmpty { return "—" }
+        if unit.isEmpty { return qty }
+        if qty.isEmpty { return unit }
+        return "\(qty) \(unit)"
+    }
+
+    // MARK: - Steps
+
+    private var stepsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionHeader(title: "Steps")
+
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
+                    stepRow(index: index + 1, step: step)
+                }
+            }
+        }
+    }
+
+    private func stepRow(index: Int, step: Recipe.Step) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Text(String(format: "%02d", index))
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .tracking(0.5)
+                .foregroundStyle(Color.kaaramSpice)
+                .frame(width: 34, height: 34)
+                .background(Color.kaaramSpiceWash, in: Circle())
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(step.text)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.kaaramInkSoft)
+                    .lineSpacing(3)
+
+                if let seconds = step.durationSec {
+                    HStack(spacing: 5) {
+                        Image(systemName: "timer")
+                            .font(.system(size: 10))
+                        Text(Self.format(seconds: seconds))
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(Color.kaaramTurmeric)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.kaaramTurmeric.opacity(0.14), in: Capsule())
+                }
+            }
+        }
+    }
+
+    // MARK: - Sticky CTA
+
+    private var stickyCTA: some View {
+        VStack(spacing: 0) {
+            LinearGradient(
+                colors: [Color.kaaramBackground.opacity(0), Color.kaaramBackground],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 24)
+
+            Button {
+                isCookingModeActive = true
+            } label: {
+                HStack(spacing: 10) {
+                    Text("Start cooking")
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 13))
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    recipe.steps.isEmpty ? Color.kaaramSpice.opacity(0.4) : Color.kaaramSpice,
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
+            }
+            .disabled(recipe.steps.isEmpty)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 26)
+            .background(Color.kaaramBackground)
         }
     }
 
     // MARK: - Helpers
 
-    private var shareText: String {
-        "\(recipe.nameEN) (\(recipe.nameTE))\n\n\(recipe.summary)"
-    }
-
-    private static func difficultyLabel(_ level: Int) -> String {
-        switch level {
-        case 1: "Easy"
-        case 2: "Medium"
-        case 3: "Involved"
-        default: "—"
+    private func toggleFavorite() {
+        haptic.impactOccurred()
+        if let existing = matchingFavorites.first {
+            modelContext.delete(existing)
+        } else {
+            modelContext.insert(FavoriteRecipe(slug: recipe.slug))
         }
+        try? modelContext.save()
     }
 
-    private static func symbol(for category: Recipe.Category) -> String {
-        switch category {
-        case .breakfast: "sunrise.fill"
-        case .curry:     "bowl.fill"
-        case .pickle:    "leaf.fill"
-        case .sweet:     "birthday.cake.fill"
-        case .festive:   "sparkles"
-        case .tiffin:    "cup.and.saucer.fill"
-        case .rice:      "circle.grid.2x2.fill"
-        case .chutney:   "drop.fill"
-        case .snack:     "takeoutbag.and.cup.and.straw.fill"
-        case .other:     "fork.knife"
-        }
+    private static func format(seconds: Int) -> String {
+        if seconds < 60 { return "\(seconds)s" }
+        let m = seconds / 60
+        let s = seconds % 60
+        return s == 0 ? "\(m) min" : "\(m)m \(s)s"
     }
 
-    // Groups adjacent ingredients that share the same `section` value.
-    // Preserves author order. Ingredients with no section become their
-    // own untitled group.
     private struct IngredientGroup { let section: String?; let items: [Recipe.Ingredient] }
 
-    private static func groupedIngredients(_ list: [Recipe.Ingredient]) -> [IngredientGroup] {
+    private static func grouped(_ list: [Recipe.Ingredient]) -> [IngredientGroup] {
         var groups: [IngredientGroup] = []
         for ing in list {
             if let last = groups.last, last.section == ing.section {
@@ -392,103 +472,12 @@ struct RecipeDetailView: View {
     }
 }
 
-// MARK: - Ingredient row
-
-private struct IngredientRow: View {
-    let ingredient: Recipe.Ingredient
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Spacing.m) {
-            Text(quantityText)
-                .font(.kaaramCallout)
-                .foregroundStyle(Color.kaaramSpice)
-                .frame(minWidth: 72, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(ingredient.item)
-                    .font(.kaaramBody)
-                if let notes = ingredient.notes, !notes.isEmpty {
-                    Text(notes)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Spacer(minLength: 0)
-        }
-    }
-
-    private var quantityText: String {
-        let qty = ingredient.qty?.trimmingCharacters(in: .whitespaces) ?? ""
-        let unit = ingredient.unit?.trimmingCharacters(in: .whitespaces) ?? ""
-        if qty.isEmpty && unit.isEmpty { return "—" }
-        if unit.isEmpty { return qty }
-        if qty.isEmpty { return unit }
-        return "\(qty) \(unit)"
-    }
-}
-
-// MARK: - Step row
-
-private struct StepRow: View {
-    let number: Int
-    let step: Recipe.Step
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Spacing.m) {
-            numberBadge
-
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                Text(step.text)
-                    .font(.kaaramBody)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let seconds = step.durationSec {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "timer")
-                        Text(Self.format(seconds: seconds))
-                    }
-                    .font(.caption)
-                    .foregroundStyle(Color.kaaramTurmeric)
-                    .padding(.horizontal, Spacing.s)
-                    .padding(.vertical, 4)
-                    .background(
-                        Color.kaaramTurmeric.opacity(0.15),
-                        in: Capsule()
-                    )
-                }
-            }
-        }
-    }
-
-    private var numberBadge: some View {
-        Text("\(number)")
-            .font(.kaaramHeadline)
-            .foregroundStyle(.white)
-            .frame(width: 32, height: 32)
-            .background(Color.kaaramSpice, in: Circle())
-    }
-
-    private static func format(seconds: Int) -> String {
-        if seconds < 60 { return "\(seconds)s" }
-        let m = seconds / 60
-        let s = seconds % 60
-        return s == 0 ? "\(m) min" : "\(m)m \(s)s"
-    }
-}
-
-// MARK: - Previews
-
 #Preview("Palak Paneer") {
-    NavigationStack {
-        RecipeDetailView(recipe: .palakPaneer)
-    }
-    .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+    NavigationStack { RecipeDetailView(recipe: .palakPaneer) }
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }
 
 #Preview("Sparse (Pappu)") {
-    NavigationStack {
-        RecipeDetailView(recipe: .pappu)
-    }
-    .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
+    NavigationStack { RecipeDetailView(recipe: .pappu) }
+        .modelContainer(for: [FavoriteRecipe.self, RecipeNote.self, CachedRecipe.self], inMemory: true)
 }

@@ -2,9 +2,10 @@
 //  BrowseView.swift
 //  kaaram
 //
-//  Search & filter screen. Text search (.searchable in nav bar) +
-//  region chip row below + toolbar menu combining Sort and Category.
-//  All filtering happens client-side over the cached recipe set.
+//  Explore tab — editorial, dense search surface. Serif "Explore" title
+//  with a "N RECIPES" mono count, search pill, horizontal filter chips,
+//  a category segmented control, then list rows. All filtering is
+//  client-side over the cached recipe set.
 //
 
 import SwiftData
@@ -13,6 +14,8 @@ import SwiftUI
 struct BrowseView: View {
     @State private var viewModel: BrowseViewModel
 
+    @FocusState private var isSearchFocused: Bool
+
     init(repository: RecipeRepository) {
         _viewModel = State(initialValue: BrowseViewModel(repository: repository))
     }
@@ -20,47 +23,82 @@ struct BrowseView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                regionFilterRow
-                    .padding(.bottom, Spacing.s)
-
+                header
+                searchBar
+                filterChips
+                segmentedCategory
                 content
             }
             .background(Color.kaaramBackground)
-            .navigationTitle("Browse")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(
-                text: $viewModel.searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: "Search recipes, ingredients, tags"
-            )
-            .onSubmit(of: .search) {
-                viewModel.commitSearch()
-            }
-            .searchSuggestions {
-                recentSearchSuggestions
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    sortAndCategoryMenu
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Recipe.self) { recipe in
                 RecipeDetailView(recipe: recipe)
             }
-            .refreshable { await viewModel.reload() }
         }
         .task { await viewModel.loadIfNeeded() }
     }
 
-    // MARK: - Region chips
+    // MARK: - Header
 
-    private var regionFilterRow: some View {
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text("Explore")
+                .font(.kaaramDisplay)
+                .tracking(-0.7)
+                .foregroundStyle(Color.kaaramInk)
+            Spacer()
+            MonoCap("\(viewModel.allRecipes.count) RECIPES")
+        }
+        .padding(.horizontal, Spacing.l)
+        .padding(.top, Spacing.s)
+    }
+
+    // MARK: - Search
+
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.kaaramInkMuted)
+
+            TextField("", text: $viewModel.searchText, prompt: Text("Search \(max(viewModel.allRecipes.count, 1))+ recipes")
+                .foregroundStyle(Color.kaaramInkMuted))
+                .font(.system(size: 14.5))
+                .foregroundStyle(Color.kaaramInk)
+                .textInputAutocapitalization(.never)
+                .focused($isSearchFocused)
+                .submitLabel(.search)
+                .onSubmit { viewModel.commitSearch() }
+
+            if !viewModel.searchText.isEmpty {
+                Button {
+                    viewModel.searchText = ""
+                    isSearchFocused = false
+                } label: {
+                    Text("Cancel")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.kaaramInkMuted)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.kaaramSurface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.kaaramHairline2, lineWidth: 1)
+        )
+        .padding(.horizontal, Spacing.l)
+        .padding(.top, Spacing.m)
+    }
+
+    // MARK: - Filter chips
+
+    private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.xs) {
-                FilterChip(
-                    title: "All",
-                    isSelected: viewModel.selectedRegion == nil
-                ) {
+            HStack(spacing: Spacing.s) {
+                FilterChip(title: "All", isSelected: viewModel.selectedRegion == nil) {
                     viewModel.selectedRegion = nil
                 }
 
@@ -70,73 +108,62 @@ struct BrowseView: View {
                         isSelected: viewModel.selectedRegion == region
                     ) {
                         viewModel.selectedRegion =
-                            (viewModel.selectedRegion == region) ? nil : region
+                            viewModel.selectedRegion == region ? nil : region
+                    }
+                }
+
+                Rectangle().fill(Color.kaaramHairline).frame(width: 1, height: 18)
+                    .padding(.horizontal, 2)
+
+                ForEach(Self.quickTags, id: \.self) { tag in
+                    FilterChip(
+                        title: tag,
+                        isSelected: viewModel.searchText == tag
+                    ) {
+                        viewModel.searchText = (viewModel.searchText == tag) ? "" : tag
                     }
                 }
             }
             .padding(.horizontal, Spacing.l)
-            .padding(.vertical, Spacing.s)
+            .padding(.vertical, Spacing.m)
         }
     }
 
-    // MARK: - Sort + Category menu
+    // MARK: - Segmented category
 
-    private var sortAndCategoryMenu: some View {
-        Menu {
-            Section("Sort by") {
-                Picker("Sort", selection: $viewModel.sort) {
-                    ForEach(BrowseViewModel.Sort.allCases) { option in
-                        Label(option.rawValue, systemImage: option.systemImage)
-                            .tag(option)
-                    }
-                }
-            }
-
-            Section("Category") {
-                Picker("Category", selection: $viewModel.selectedCategory) {
-                    Text("All").tag(Recipe.Category?.none)
-                    ForEach(Recipe.Category.allCases.filter { $0 != .other }, id: \.self) { category in
-                        Text(category.displayName).tag(Recipe.Category?.some(category))
-                    }
-                }
-            }
-
-            if viewModel.hasActiveFilters {
-                Divider()
-                Button(role: .destructive) {
-                    viewModel.clearFilters()
+    private var segmentedCategory: some View {
+        HStack(spacing: 0) {
+            ForEach(Self.segmentedCategories, id: \.self) { cat in
+                let isSelected = viewModel.selectedCategory == cat
+                Button {
+                    viewModel.selectedCategory = isSelected ? nil : cat
                 } label: {
-                    Label("Clear filters", systemImage: "xmark.circle")
+                    Text(cat.displayName)
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .tracking(0.2)
+                        .foregroundStyle(isSelected ? Color.kaaramInk : Color.kaaramInkMuted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background(
+                            Group {
+                                if isSelected {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.kaaramBackground)
+                                        .shadow(color: .black.opacity(0.06), radius: 2, y: 1)
+                                }
+                            }
+                        )
                 }
-            }
-        } label: {
-            Image(systemName: viewModel.hasActiveFilters
-                  ? "line.3.horizontal.decrease.circle.fill"
-                  : "line.3.horizontal.decrease.circle")
-                .foregroundStyle(
-                    viewModel.hasActiveFilters ? Color.kaaramSpice : .primary
-                )
-        }
-    }
-
-    // MARK: - Search suggestions
-
-    /// Rendered under the search field while focused. Shows recent
-    /// searches (tap to fill and submit), with a Clear All row.
-    @ViewBuilder
-    private var recentSearchSuggestions: some View {
-        if viewModel.searchText.isEmpty && !viewModel.recentSearches.isEmpty {
-            ForEach(viewModel.recentSearches, id: \.self) { term in
-                Label(term, systemImage: "clock.arrow.circlepath")
-                    .searchCompletion(term)
-            }
-
-            Button(role: .destructive) {
-                viewModel.clearRecents()
-            } label: {
-                Label("Clear recent searches", systemImage: "trash")
+                .buttonStyle(.plain)
             }
         }
+        .padding(3)
+        .background(
+            Color.kaaramSurface2,
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+        )
+        .padding(.horizontal, Spacing.l)
+        .padding(.bottom, Spacing.m)
     }
 
     // MARK: - Content
@@ -153,25 +180,14 @@ struct BrowseView: View {
         }
     }
 
-    private var loadingState: some View {
-        VStack(spacing: Spacing.m) {
-            ProgressView()
-            Text("Loading recipes…")
-                .font(.kaaramCallout)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
     @ViewBuilder
     private var resultsList: some View {
         let results = viewModel.results
-
         if results.isEmpty {
             noResultsState
         } else {
             ScrollView {
-                LazyVStack(spacing: Spacing.m) {
+                LazyVStack(spacing: 0) {
                     ForEach(results) { recipe in
                         NavigationLink(value: recipe) {
                             RecipeRow(recipe: recipe)
@@ -180,42 +196,46 @@ struct BrowseView: View {
                     }
                 }
                 .padding(.horizontal, Spacing.l)
-                .padding(.top, Spacing.xs)
-                .padding(.bottom, Spacing.l)
+                .padding(.bottom, Spacing.xl)
             }
         }
     }
 
+    private var loadingState: some View {
+        VStack(spacing: Spacing.m) {
+            ProgressView().tint(Color.kaaramSpice)
+            Text("Loading…")
+                .font(.kaaramCallout)
+                .foregroundStyle(Color.kaaramInkMuted)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     @ViewBuilder
     private var noResultsState: some View {
-        let isFiltering = !viewModel.searchText
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty || viewModel.hasActiveFilters
-
+        let isFiltering = !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                          viewModel.hasActiveFilters
         VStack(spacing: Spacing.m) {
             Image(systemName: isFiltering ? "magnifyingglass" : "tray")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-
+                .font(.system(size: 40))
+                .foregroundStyle(Color.kaaramInkMuted)
             Text(isFiltering ? "No matches" : "No recipes yet")
                 .font(.kaaramHeadline)
-
-            Text(isFiltering
-                 ? "Try a different word or clear filters."
-                 : "Check back soon.")
+                .foregroundStyle(Color.kaaramInk)
+            Text(isFiltering ? "Try a different word or clear filters." : "Check back soon.")
                 .font(.kaaramCallout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.kaaramInkMuted)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.xl)
-
             if isFiltering {
-                Button("Clear filters") {
+                Button {
                     viewModel.searchText = ""
                     viewModel.clearFilters()
+                } label: {
+                    Text("Clear filters")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.kaaramSpice)
+                        .padding(.top, Spacing.s)
                 }
-                .font(.kaaramCallout)
-                .padding(.top, Spacing.s)
-                .foregroundStyle(Color.kaaramSpice)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -224,26 +244,38 @@ struct BrowseView: View {
     private func errorState(_ message: String) -> some View {
         VStack(spacing: Spacing.m) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 40))
+                .font(.system(size: 36))
                 .foregroundStyle(Color.kaaramSpice)
             Text("Something went wrong")
                 .font(.kaaramHeadline)
+                .foregroundStyle(Color.kaaramInk)
             Text(message)
                 .font(.kaaramCallout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.kaaramInkMuted)
                 .multilineTextAlignment(.center)
-            Button("Try again") {
+            Button {
                 Task { await viewModel.reload() }
+            } label: {
+                Text("Try again")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.kaaramBackground)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(Color.kaaramInk, in: Capsule())
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.kaaramSpice)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-}
 
-// MARK: - Previews
+    // MARK: - Constants
+
+    private static let quickTags = ["30 min", "Festive", "Sweet", "Breakfast"]
+
+    private static let segmentedCategories: [Recipe.Category] = [
+        .breakfast, .curry, .rice, .snack, .sweet
+    ]
+}
 
 #Preview("Loaded") {
     BrowseView(repository: MockRecipeRepository())

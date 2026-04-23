@@ -1,10 +1,10 @@
 # Kaaram
 
-A recipe app for Telugu and South Indian food, built with SwiftUI for iOS.
+A recipe app for Telugu and Indian food, built with SwiftUI for iOS.
 
 ## About
 
-Kaaram (కారం — "spice" in Telugu) is a curated collection of authentic Telugu and South Indian recipes, from everyday staples like pappu and pulihora to festive favorites like pulusu, vada, and biryani.
+Kaaram (కారం — "spice" in Telugu) is a curated collection of authentic Telugu and Indian recipes, from everyday staples like pappu and pulihora to festive favorites like pulusu, vada, and biryani.
 
 ## Status
 

@@ -2,15 +2,17 @@
 //  RecipeRow.swift
 //  kaaram
 //
-//  Horizontal compact row used by the Browse and Favorites tabs.
-//  Thumbnail + bilingual name (with inline heart if favorited) +
-//  region/time meta + chevron disclosure.
+//  Horizontal list row used by Explore, Saved, and Collection screens.
+//  Thumbnail · serif name · "Region · time" sub-label · heat dots ·
+//  bookmark affordance. No card chrome — the row sits on the canvas and
+//  is separated from its neighbors by a hairline.
 //
 
 import SwiftUI
 
 struct RecipeRow: View {
     let recipe: Recipe
+    var showBookmark: Bool = true
 
     @Environment(\.favoriteSlugs) private var favoriteSlugs
 
@@ -19,51 +21,45 @@ struct RecipeRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Spacing.m) {
+        HStack(spacing: 14) {
             thumbnail
+                .frame(width: 96, height: 76)
 
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: Spacing.xs) {
-                    Text(recipe.nameEN)
-                        .font(.kaaramHeadline)
-                        .lineLimit(1)
-                    if isFavorited {
-                        Image(systemName: "heart.fill")
-                            .font(.caption)
-                            .foregroundStyle(Color.kaaramSpice)
-                            .transition(.scale.combined(with: .opacity))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(recipe.nameEN)
+                    .font(.kaaramHeadline)
+                    .tracking(-0.2)
+                    .foregroundStyle(Color.kaaramInk)
+                    .lineLimit(1)
+
+                Text(subLabel)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Color.kaaramInkMuted)
+                    .lineLimit(1)
+
+                HStack(spacing: 12) {
+                    MetaRow(systemImage: "clock", label: timeLabel)
+                    if recipe.difficulty > 0 {
+                        HeatDots(level: recipe.difficulty + 1, max: 4, dotHeight: 9)
                     }
                 }
-
-                if !recipe.nameTE.isEmpty {
-                    Text(recipe.nameTE)
-                        .font(.kaaramTelugu)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                HStack(spacing: Spacing.xs) {
-                    Text(recipe.region.displayName)
-                    if recipe.totalMinutes > 0 {
-                        Text("·")
-                        Text("\(recipe.totalMinutes) min")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .padding(.top, 3)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: Spacing.s)
 
-            Image(systemName: "chevron.right")
-                .font(.footnote)
-                .foregroundStyle(.tertiary)
+            if showBookmark {
+                Image(systemName: isFavorited ? "bookmark.fill" : "bookmark")
+                    .font(.system(size: 15))
+                    .foregroundStyle(isFavorited ? Color.kaaramSpice : Color.kaaramInkMuted)
+            }
         }
-        .padding(Spacing.m)
-        .background(
-            Color.kaaramSurface,
-            in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous)
-        )
+        .padding(.vertical, 12)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.kaaramHairline2)
+                .frame(height: 1)
+        }
         .animation(.snappy, value: isFavorited)
     }
 
@@ -77,40 +73,31 @@ struct RecipeRow: View {
                 case .success(let image):
                     image.resizable().aspectRatio(contentMode: .fill)
                 default:
-                    placeholderSquare
+                    FoodPlaceholder(label: recipe.nameEN, flourish: false, cornerRadius: 12)
                 }
             }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         } else {
-            placeholderSquare
-                .frame(width: 60, height: 60)
+            FoodPlaceholder(label: recipe.nameEN, flourish: false, cornerRadius: 12)
         }
     }
 
-    private var placeholderSquare: some View {
-        RoundedRectangle(cornerRadius: Radius.m, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [.kaaramSpice.opacity(0.4), .kaaramTurmeric.opacity(0.5)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay {
-                Image(systemName: "fork.knife")
-                    .font(.title3)
-                    .foregroundStyle(.white)
-            }
+    private var subLabel: String {
+        "\(recipe.category.displayName) · \(recipe.region.shortName)"
+    }
+
+    private var timeLabel: String {
+        recipe.totalMinutes > 0 ? "\(recipe.totalMinutes) min" : "—"
     }
 }
 
 #Preview {
-    VStack(spacing: Spacing.m) {
+    VStack(spacing: 0) {
         RecipeRow(recipe: .palakPaneer)
         RecipeRow(recipe: .pappu)
+        RecipeRow(recipe: .pulihora)
     }
-    .padding()
+    .padding(.horizontal, Spacing.l)
     .background(Color.kaaramBackground)
     .environment(\.favoriteSlugs, ["palak-paneer"])
 }

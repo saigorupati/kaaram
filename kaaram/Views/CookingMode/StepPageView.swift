@@ -2,10 +2,10 @@
 //  StepPageView.swift
 //  kaaram
 //
-//  One page of the cooking-mode TabView. Optimized for reading at
-//  arm's length while cooking: big serif body text, high contrast,
-//  generous padding. Steps with a durationSec show a full interactive
-//  StepTimerView beneath the instruction.
+//  One page of the cooking-mode TabView. Large serif instruction, a
+//  MonoCap label ("SEAR · 4 MINUTES") as an eyebrow above it, then the
+//  inline timer card when the step has a duration. Optimized for
+//  reading at arm's length.
 //
 
 import SwiftUI
@@ -18,39 +18,47 @@ struct StepPageView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xl) {
-                stepLabel
+                MonoCap(eyebrow, color: .kaaramSpice)
 
-                Text(step.text)
-                    .font(.system(.title2, design: .serif))
-                    .fontWeight(.regular)
+                Text(instruction)
+                    .font(.system(size: 34, weight: .medium, design: .serif))
+                    .tracking(-1.0)
+                    .foregroundStyle(Color.kaaramInk)
                     .lineSpacing(4)
-                    .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let seconds = step.durationSec {
                     StepTimerView(totalSeconds: seconds)
-                        .frame(maxWidth: .infinity)
                         .padding(.top, Spacing.m)
+                        .frame(maxWidth: .infinity)
                 }
 
                 Spacer(minLength: Spacing.xl)
             }
-            .padding(.horizontal, Spacing.xl)
+            .padding(.horizontal, 28)
             .padding(.top, Spacing.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    private var stepLabel: some View {
-        HStack(spacing: Spacing.s) {
-            Text("Step \(number)")
-                .font(.kaaramCallout)
-                .foregroundStyle(Color.kaaramSpice)
-
-            Text("of \(total)")
-                .font(.kaaramCallout)
-                .foregroundStyle(.tertiary)
+    private var eyebrow: String {
+        if let seconds = step.durationSec {
+            let min = max(1, seconds / 60)
+            return "STEP \(number) OF \(total) · \(min) MIN"
         }
+        return "STEP \(number) OF \(total)"
+    }
+
+    /// Show a short "title" (first sentence) if the step text is long,
+    /// otherwise show the full text. Keeps the giant type from
+    /// overflowing on small screens.
+    private var instruction: String {
+        let trimmed = step.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count <= 120 { return trimmed }
+        if let dot = trimmed.firstIndex(of: ".") {
+            return String(trimmed[..<dot]) + "."
+        }
+        return trimmed
     }
 }
 
@@ -59,7 +67,7 @@ struct StepPageView: View {
         number: 2,
         total: 9,
         step: .init(
-            text: "Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly. Add green chilies, onion, and tomato. Cover and cook on low for 5 minutes until soft.",
+            text: "Heat 1 tbsp oil. Add cinnamon, cloves, cardamom, and cashews. Sauté briefly.",
             durationSec: 300
         )
     )
